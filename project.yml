@@ -1,0 +1,365 @@
+title: "Train NER/spancat on UnSilence VOC"
+
+directories: ["configs", "assets", "corpus", "training", "scripts", "metrics"]
+
+assets:
+  - dest: "assets/UnSilence_VOC"
+    git:
+      repo: "https://github.com/adrianeboyd/UnSilence_VOC/"
+      branch: "bugfix/processed-data-splits"
+      path: ""
+
+vars:
+  lang: "nl"
+  train_ratio: 0.8
+  dev_ratio: 0.1
+  seed: 83
+  gpu: 0
+
+
+workflows:
+  download:
+    - "download-vectors"
+
+  convert:
+    - "convert-data-ner"
+    - "convert-data-spans"
+
+  ner:
+    - "train-ner"
+    - "train-ner-trf"
+    - "evaluate-ner"
+
+  spancat:
+    - "train-spancat"
+    - "train-spancat-trf"
+    - "evaluate-spancat"
+
+  spanfinder:
+    - "train-spanfinder"
+
+commands:
+  - name: "download-vectors"
+    help: "Download and install Dutch floret vectors"
+    script:
+      - >-
+        python -m pip install https://github.com/explosion/spacy-vectors-builder/releases/download/nl-dh2023-v0.0.1/nl_vectors_floret_lg-0.0.1-py3-none-any.whl
+
+  - name: "convert-data-ner"
+    help: "Prepare the NER per type data for spaCy"
+    script:
+      - >-
+        python scripts/convert.py assets/UnSilence_VOC/processed_data/train-nl.tsv NE-MAIN Person -o corpus/train-nl.ents.Person.spacy
+      - >-
+        python scripts/convert.py assets/UnSilence_VOC/processed_data/dev-nl.tsv NE-MAIN Person -o corpus/dev-nl.ents.Person.spacy
+      - >-
+        python scripts/convert.py assets/UnSilence_VOC/processed_data/test-nl.tsv NE-MAIN Person -o corpus/test-nl.ents.Person.spacy
+      - >-
+        python scripts/convert.py assets/UnSilence_VOC/processed_data/train-nl.tsv NE-MAIN Place -o corpus/train-nl.ents.Place.spacy
+      - >-
+        python scripts/convert.py assets/UnSilence_VOC/processed_data/dev-nl.tsv NE-MAIN Place -o corpus/dev-nl.ents.Place.spacy
+      - >-
+        python scripts/convert.py assets/UnSilence_VOC/processed_data/test-nl.tsv NE-MAIN Place -o corpus/test-nl.ents.Place.spacy
+      - >-
+        python scripts/convert.py assets/UnSilence_VOC/processed_data/train-nl.tsv NE-MAIN Organization -o corpus/train-nl.ents.Organization.spacy
+      - >-
+        python scripts/convert.py assets/UnSilence_VOC/processed_data/dev-nl.tsv NE-MAIN Organization -o corpus/dev-nl.ents.Organization.spacy
+      - >-
+        python scripts/convert.py assets/UnSilence_VOC/processed_data/test-nl.tsv NE-MAIN Organization -o corpus/test-nl.ents.Organization.spacy
+    deps:
+      - assets/UnSilence_VOC/processed_data/
+      - scripts/convert.py
+    outputs:
+      - corpus/train-nl.ents.Person.spacy
+      - corpus/dev-nl.ents.Person.spacy
+      - corpus/test-nl.ents.Person.spacy
+      - corpus/train-nl.ents.Place.spacy
+      - corpus/dev-nl.ents.Place.spacy
+      - corpus/test-nl.ents.Place.spacy
+      - corpus/train-nl.ents.Organization.spacy
+      - corpus/dev-nl.ents.Organization.spacy
+      - corpus/test-nl.ents.Organization.spacy
+
+  - name: "convert-data-spans"
+    help: "Prepare the spans data for spaCy"
+    script:
+      - >-
+        python scripts/convert_all.py assets/UnSilence_VOC/processed_data/train-nl.tsv NE-MAIN -o corpus/train-nl.spans.spacy
+      - >-
+        python scripts/convert_all.py assets/UnSilence_VOC/processed_data/dev-nl.tsv NE-MAIN -o corpus/dev-nl.spans.spacy
+      - >-
+        python scripts/convert_all.py assets/UnSilence_VOC/processed_data/test-nl.tsv NE-MAIN -o corpus/test-nl.spans.spacy
+    deps:
+      - assets/UnSilence_VOC/processed_data/
+      - scripts/convert_all.py
+    outputs:
+      - corpus/train-nl.spans.spacy
+      - corpus/dev-nl.spans.spacy
+      - corpus/test-nl.spans.spacy
+
+  - name: "train-ner"
+    help: "Train NER per-type pipelines."
+    script:
+      - >-
+        python -m spacy train
+        configs/ner.cfg
+        --output training/ner_person
+        --paths.train corpus/train-nl.ents.Person.spacy
+        --paths.dev corpus/dev-nl.ents.Person.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+      - >-
+        python -m spacy train
+        configs/ner.cfg
+        --output training/ner_place
+        --paths.train corpus/train-nl.ents.Place.spacy
+        --paths.dev corpus/dev-nl.ents.Place.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+      - >-
+        python -m spacy train
+        configs/ner.cfg
+        --output training/ner_organization
+        --paths.train corpus/train-nl.ents.Organization.spacy
+        --paths.dev corpus/dev-nl.ents.Organization.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - corpus/train-nl.ents.Person.spacy
+      - corpus/dev-nl.ents.Person.spacy
+      - corpus/train-nl.ents.Place.spacy
+      - corpus/dev-nl.ents.Place.spacy
+      - corpus/train-nl.ents.Organization.spacy
+      - corpus/dev-nl.ents.Organization.spacy
+    outputs:
+      - training/ner_person
+      - training/ner_place
+      - training/ner_organization
+
+  - name: "train-ner-trf"
+    help: "Train NER TRF per type."
+    script:
+      - >-
+        python -m spacy train
+        configs/ner_trf.cfg
+        --output training/ner_trf_person
+        --paths.train corpus/train-nl.ents.Person.spacy
+        --paths.dev corpus/dev-nl.ents.Person.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+      - >-
+        python -m spacy train
+        configs/ner_trf.cfg
+        --output training/ner_trf_place
+        --paths.train corpus/train-nl.ents.Place.spacy
+        --paths.dev corpus/dev-nl.ents.Place.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+      - >-
+        python -m spacy train
+        configs/ner_trf.cfg
+        --output training/ner_trf_organization
+        --paths.train corpus/train-nl.ents.Organization.spacy
+        --paths.dev corpus/dev-nl.ents.Organization.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - corpus/train-nl.ents.Person.spacy
+      - corpus/dev-nl.ents.Person.spacy
+      - corpus/train-nl.ents.Place.spacy
+      - corpus/dev-nl.ents.Place.spacy
+      - corpus/train-nl.ents.Organization.spacy
+      - corpus/dev-nl.ents.Organization.spacy
+    outputs:
+      - training/ner_trf_person
+      - training/ner_trf_place
+      - training/ner_trf_organization
+
+  - name: "evaluate-ner"
+    script:
+       - >-
+         python -m spacy evaluate
+         training/ner_person/model-best
+         corpus/test-nl.ents.Person.spacy
+         -o metrics/ner_person.json
+         --gpu-id ${vars.gpu}
+       - >-
+         python -m spacy evaluate
+         training/ner_place/model-best
+         corpus/test-nl.ents.Place.spacy
+         -o metrics/ner_place.json
+         --gpu-id ${vars.gpu}
+       - >-
+         python -m spacy evaluate
+         training/ner_organization/model-best
+         corpus/test-nl.ents.Organization.spacy
+         -o metrics/ner_organization.json
+         --gpu-id ${vars.gpu}
+       - >-
+         python -m spacy evaluate
+         training/ner_trf_person/model-best
+         corpus/test-nl.ents.Person.spacy
+         -o metrics/ner_trf_person.json
+         --gpu-id ${vars.gpu}
+       - >-
+         python -m spacy evaluate
+         training/ner_trf_place/model-best
+         corpus/test-nl.ents.Place.spacy
+         -o metrics/ner_trf_place.json
+         --gpu-id ${vars.gpu}
+       - >-
+         python -m spacy evaluate
+         training/ner_trf_organization/model-best
+         corpus/test-nl.ents.Organization.spacy
+         -o metrics/ner_trf_organization.json
+         --gpu-id ${vars.gpu}
+    deps:
+      - corpus/test-nl.ents.Person.spacy
+      - corpus/test-nl.ents.Place.spacy
+      - corpus/test-nl.ents.Organization.spacy
+      - training/ner_person/model-best
+      - training/ner_trf_person/model-best
+      - training/ner_place/model-best
+      - training/ner_trf_place/model-best
+      - training/ner_organization/model-best
+      - training/ner_trf_organization/model-best
+    outputs:
+      - metrics/ner_person.json
+      - metrics/ner_trf_person.json
+      - metrics/ner_place.json
+      - metrics/ner_trf_place.json
+      - metrics/ner_organization.json
+      - metrics/ner_trf_organization.json
+
+  - name: "train-spancat-person"
+    help: "Train the default spancat pipeline."
+    script:
+      - >-
+        python -m spacy train
+        configs/spancat_person.cfg
+        --output training/spancat_person
+        --paths.train corpus/train-nl.ents.Person.spacy
+        --paths.dev corpus/dev-nl.ents.Person.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/spancat_person.cfg
+      - corpus/train-nl.ents.Person.spacy
+      - corpus/dev-nl.ents.Person.spacy
+    outputs:
+      - training/spancat_person.cfg
+
+  - name: "train-spancat-trf-person"
+    help: "Train spancat TRF"
+    script:
+      - >-
+        python -m spacy train
+        configs/spancat_trf_person.cfg
+        --output training/spancat_trf_person
+        --paths.train corpus/train-nl.ents.Person.spacy
+        --paths.dev corpus/dev-nl.ents.Person.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - corpus/train-nl.ents.Person.spacy
+      - corpus/dev-nl.ents.Person.spacy
+    outputs:
+      - configs/spancat_trf_person.cfg
+      - training/spancat_trf_person
+
+  - name: "evaluate-spancat-person"
+    script:
+       - >-
+         python -m spacy evaluate
+         training/spancat_person/model-best
+         corpus/test-nl.ents.Person.spacy
+         -o metrics/spancat_person.json
+         --gpu-id ${vars.gpu}
+       - >-
+         python -m spacy evaluate
+         training/spancat_trf_person/model-best
+         corpus/test-nl.ents.Person.spacy
+         -o metrics/spancat_trf_person.json
+         --gpu-id ${vars.gpu}
+    deps:
+      - corpus/test-nl.spans.spacy
+      - training/spancat_person/model-best
+      - training/spancat_trf_person/model-best
+    outputs:
+      - metrics/spancat_person.json
+      - metrics/spancat_trf_person.json
+
+  - name: "train-spancat"
+    help: "Train the default spancat pipeline."
+    script:
+      - >-
+        python -m spacy train
+        configs/spancat.cfg
+        --output training/spancat
+        --paths.train corpus/train-nl.spans.spacy
+        --paths.dev corpus/dev-nl.spans.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/spancat.cfg
+      - corpus/train-nl.spans.spacy
+      - corpus/dev-nl.spans.spacy
+    outputs:
+      - training/spancat
+
+  - name: "train-spancat-trf"
+    help: "Train spancat TRF"
+    script:
+      - >-
+        python -m spacy train
+        configs/spancat_trf.cfg
+        --output training/spancat_trf
+        --paths.train corpus/train-nl.spans.spacy
+        --paths.dev corpus/dev-nl.spans.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - corpus/train-nl.spans.spacy
+      - corpus/dev-nl.spans.spacy
+    outputs:
+      - training/spancat_trf
+
+  - name: "evaluate-spancat"
+    script:
+       - >-
+         python -m spacy evaluate
+         training/spancat/model-best
+         corpus/test-nl.spans.spacy
+         -o metrics/spancat.json
+         --gpu-id ${vars.gpu}
+       - >-
+         python -m spacy evaluate
+         training/spancat_trf/model-best
+         corpus/test-nl.spans.spacy
+         -o metrics/spancat_trf.json
+         --gpu-id ${vars.gpu}
+    deps:
+      - corpus/test-nl.spans.spacy
+      - training/spancat/model-best
+      - training/spancat_trf/model-best
+    outputs:
+      - metrics/spancat.json
+      - metrics/spancat_trf.json
+
+  - name: "train-spanfinder"
+    help: "Train the span finder pipeline."
+    script:
+      - >-
+        python -m spacy train
+        configs/span_finder.cfg
+        --output training/span_finder
+        --paths.train corpus/train-nl.spans.spacy
+        --paths.dev corpus/dev-nl.spans.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/span_finder.cfg
+      - corpus/train-nl.spans.spacy
+      - corpus/dev-nl.spans.spacy
+    outputs:
+      - training/span_finder
