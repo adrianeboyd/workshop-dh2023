@@ -1,5 +1,8 @@
 # Project-specific
 project.lock
+assets
+corpus
+training
 
 .env/
 .env*
