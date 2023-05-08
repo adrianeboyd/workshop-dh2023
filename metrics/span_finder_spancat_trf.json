@@ -1,0 +1,30 @@
+{
+  "token_acc":null,
+  "token_p":null,
+  "token_r":null,
+  "token_f":null,
+  "span_finder_NE-MAIN_p":0.6332268371,
+  "span_finder_NE-MAIN_r":0.4665725047,
+  "span_finder_NE-MAIN_f":0.5372729737,
+  "spans_NE-MAIN_p":0.6293929712,
+  "spans_NE-MAIN_r":0.463747646,
+  "spans_NE-MAIN_f":0.5340200596,
+  "spans_NE-MAIN_per_type":{
+    "Organization":{
+      "p":0.3,
+      "r":0.1776315789,
+      "f":0.2231404959
+    },
+    "Person":{
+      "p":0.6980392157,
+      "r":0.5,
+      "f":0.5826513912
+    },
+    "Place":{
+      "p":0.5406593407,
+      "r":0.4489051095,
+      "f":0.4905284148
+    }
+  },
+  "speed":5358.2235213148
+}

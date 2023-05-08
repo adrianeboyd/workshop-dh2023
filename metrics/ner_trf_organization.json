@@ -1,0 +1,17 @@
+{
+  "token_acc":null,
+  "token_p":null,
+  "token_r":null,
+  "token_f":null,
+  "ents_p":0.3184357542,
+  "ents_r":0.375,
+  "ents_f":0.3444108761,
+  "ents_per_type":{
+    "Organization":{
+      "p":0.3184357542,
+      "r":0.375,
+      "f":0.3444108761
+    }
+  },
+  "speed":12066.3705699302
+}

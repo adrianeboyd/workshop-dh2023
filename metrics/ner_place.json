@@ -1,0 +1,17 @@
+{
+  "token_acc":null,
+  "token_p":null,
+  "token_r":null,
+  "token_f":null,
+  "ents_p":0.6211699164,
+  "ents_r":0.4069343066,
+  "ents_f":0.4917309813,
+  "ents_per_type":{
+    "Place":{
+      "p":0.6211699164,
+      "r":0.4069343066,
+      "f":0.4917309813
+    }
+  },
+  "speed":37126.6878118764
+}

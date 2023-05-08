@@ -1,0 +1,17 @@
+{
+  "token_acc":null,
+  "token_p":null,
+  "token_r":null,
+  "token_f":null,
+  "ents_p":0.6446280992,
+  "ents_r":0.547752809,
+  "ents_f":0.5922551253,
+  "ents_per_type":{
+    "Person":{
+      "p":0.6446280992,
+      "r":0.547752809,
+      "f":0.5922551253
+    }
+  },
+  "speed":36478.098175047
+}

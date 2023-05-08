@@ -1,0 +1,27 @@
+{
+  "token_acc":null,
+  "token_p":null,
+  "token_r":null,
+  "token_f":null,
+  "spans_NE-MAIN_p":0.6338762215,
+  "spans_NE-MAIN_r":0.4580979284,
+  "spans_NE-MAIN_f":0.5318393004,
+  "spans_NE-MAIN_per_type":{
+    "Person":{
+      "p":0.6591695502,
+      "r":0.5351123596,
+      "f":0.5906976744
+    },
+    "Organization":{
+      "p":0.0,
+      "r":0.0,
+      "f":0.0
+    },
+    "Place":{
+      "p":0.5687331536,
+      "r":0.3850364964,
+      "f":0.4591947769
+    }
+  },
+  "speed":25061.5164526232
+}
