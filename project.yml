@@ -35,8 +35,11 @@ workflows:
     - "train-spancat-trf"
     - "evaluate-spancat"
 
-  spanfinder:
-    - "train-spanfinder"
+  span-finder:
+    - "train-span-finder"
+    - "train-span-finder-spancat"
+    - "train-span-finder-spancat-trf"
+    - "evaluate-span-finder-spancat"
 
 commands:
   - name: "download-vectors"
@@ -288,7 +291,7 @@ commands:
       - metrics/spancat.json
       - metrics/spancat_trf.json
 
-  - name: "train-spanfinder"
+  - name: "train-span-finder"
     help: "Train the span finder pipeline."
     script:
       - >-
@@ -305,3 +308,61 @@ commands:
       - corpus/dev-nl.spans.spacy
     outputs:
       - training/span_finder
+
+  - name: "train-span-finder-spancat"
+    help: "Train the span finder spancat pipeline."
+    script:
+      - >-
+        python -m spacy train
+        configs/span_finder_spancat.cfg
+        --output training/span_finder_spancat
+        --paths.train corpus/train-nl.spans.spacy
+        --paths.dev corpus/dev-nl.spans.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/span_finder_spancat.cfg
+      - corpus/train-nl.spans.spacy
+      - corpus/dev-nl.spans.spacy
+    outputs:
+      - training/span_finder_spancat
+
+  - name: "train-span-finder-spancat-trf"
+    help: "Train the span finder spancat pipeline."
+    script:
+      - >-
+        python -m spacy train
+        configs/span_finder_spancat_trf.cfg
+        --output training/span_finder_spancat_trf
+        --paths.train corpus/train-nl.spans.spacy
+        --paths.dev corpus/dev-nl.spans.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/span_finder_spancat_trf.cfg
+      - corpus/train-nl.spans.spacy
+      - corpus/dev-nl.spans.spacy
+    outputs:
+      - training/span_finder_spancat_trf
+
+  - name: "evaluate-span-finder-spancat"
+    script:
+       - >-
+         python -m spacy evaluate
+         training/span_finder_spancat/model-best
+         corpus/test-nl.spans.spacy
+         -o metrics/span_finder_spancat.json
+         --gpu-id ${vars.gpu}
+       - >-
+         python -m spacy evaluate
+         training/span_finder_spancat_trf/model-best
+         corpus/test-nl.spans.spacy
+         -o metrics/span_finder_spancat_trf.json
+         --gpu-id ${vars.gpu}
+    deps:
+      - corpus/test-nl.spans.spacy
+      - training/span_finder_spancat/model-best
+      - training/span_finder_spancat_trf/model-best
+    outputs:
+      - metrics/span_finder_spancat.json
+      - metrics/span_finder_spancat_trf.json
