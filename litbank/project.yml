@@ -29,17 +29,9 @@ workflows:
     - "train-ner"
     - "evaluate-ner-test"
   
-  ner-lstm:
-    - "train-ner-lstm"
-    - "evaluate-ner-lstm-test"
-
   spancat:
     - "train-spancat"
     - "evaluate-spancat-test"
-  
-  spancat-lstm:
-    - "train-spancat-lstm"
-    - "evaluate-spancat-lstm-test"
   
   spancat-trf:
     - "train-spancat-trf"
@@ -49,18 +41,10 @@ workflows:
     - "train-spancat-singlelabel"
     - "evaluate-spancat-singlelabel-test"
   
-  spancat-singlelabel-lstm:
-    - "train-spancat-singlelabel-lstm"
-    - "evaluate-spancat-singlelabel-lstm-test"
-
   tagger:
     - "train-tagger"
     - "evaluate-tagger-test"
   
-  tagger-lstm:
-    - "train-tagger-lstm"
-    - "evaluate-tagger-lstm-test"
-
 
 commands:
   - name: "prepare-entities"
@@ -137,23 +121,6 @@ commands:
       - training/ner
 
   
-  - name: "train-ner-lstm"
-    help: "Train the NER pipeline with an LSTM encoder."
-    script:
-      - >-
-        python -m spacy train
-        configs/ner_lstm.cfg
-        --output training/ner_lstm
-        --paths.train corpus/entity_ents-train.spacy
-        --paths.dev corpus/entity_ents-dev.spacy
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-    deps:
-      - corpus/entity_ents-train.spacy
-      - corpus/entity_ents-dev.spacy
-    outputs:
-      - training/ner_lstm
-
   - name: "train-ner-trf"
     help: "Train the ner pipeline with an transformer encoder."
     script:
@@ -189,24 +156,6 @@ commands:
     outputs:
       - training/spancat
   
-  - name: "train-spancat-lstm"
-    help: "Train the spancat pipeline with an LSTM encoder."
-    script:
-      - >-
-        python -m spacy train
-        configs/spancat_lstm.cfg
-        --output training/spancat_lstm
-        --paths.train corpus/entity_spans-train.spacy
-        --paths.dev corpus/entity_spans-dev.spacy
-        --paths.vectors en_core_web_lg
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-    deps:
-      - corpus/entity_spans-train.spacy
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - training/spancat_lstm
- 
   - name: "train-spancat-trf"
     help: "Train the spancat pipeline with an transformer encoder."
     script:
@@ -234,15 +183,6 @@ commands:
     deps:
       - training/spancat/model-best
 
-  - name: "find-threshold-lstm"
-    help: "Find classifier threshold for the spancat with the LSTM encoder."
-    script:
-      - >- 
-        python -m spacy find-threshold training/spancat_lstm/model-best
-        corpus/entity_spans-dev.spacy spancat threshold spans_sc_f
-    deps:
-      - training/spancat_lstm/model-best
-
   - name: "train-spancat-singlelabel"
     help: "Train the default spancat-singlelabel pipeline."
     script:
@@ -261,25 +201,6 @@ commands:
     outputs:
       - training/spancat_singlelabel
   
-  - name: "train-spancat-singlelabel-lstm"
-    help: "Train the default spancat-singlelabel pipeline with an LSTM encoder."
-    script:
-      - >-
-        python -m spacy train
-        configs/spancat_singlelabel_lstm.cfg
-        --output training/spancat_singlelabel_lstm
-        --paths.train corpus/entity_spans-train.spacy
-        --paths.dev corpus/entity_spans-dev.spacy
-        --paths.vectors en_core_web_lg
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-    deps:
-      - corpus/entity_spans-train.spacy
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - training/spancat_singlelabel_lstm
-  
-
   - name: "train-tagger"
     help: "Train the default tagger pipeline."
     script:
@@ -299,25 +220,6 @@ commands:
     outputs:
       - training/tagger
   
-  - name: "train-tagger-lstm"
-    help: "Train the default tagger pipeline with an LSTM encoder."
-    script:
-      - >-
-        python -m spacy train
-        configs/tagger_lstm.cfg
-        --output training/tagger_lstm
-        --paths.train corpus/event_tags-train.spacy
-        --paths.dev corpus/event_tags-dev.spacy
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-        --code scripts/positive_tagger_scorer.py
-        --paths.vectors en_core_web_lg
-    deps:
-      - corpus/event_tags-train.spacy
-      - corpus/event_tags-dev.spacy
-    outputs:
-      - training/tagger_lstm
-
   - name: "evaluate-tagger-dev"
     help: "Evaluate the default tagger pipeline on the development set."
     script:
@@ -350,40 +252,6 @@ commands:
     outputs:
       - metrics/tagger_test.json
   
-
-  - name: "evaluate-tagger-lstm-dev"
-    help: "Evaluate the tagger pipeline with a BiLSTM encoder on the development set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/tagger_lstm/model-best
-        corpus/event_tags-dev.spacy
-        --output metrics/tagger_lstm_dev.json
-        --gpu-id ${vars.gpu}
-        --code scripts/positive_tagger_scorer.py
-    deps:
-      - training/tagger_lstm/model-best
-      - corpus/event_tags-dev.spacy
-    outputs:
-      - metrics/tagger_dev.json
-  
-  - name: "evaluate-tagger-lstm-test"
-    help: "Evaluate the tagger pipeline with a BiLSTM encoder on the test set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/tagger_lstm/model-best
-        corpus/event_tags-test.spacy
-        --output metrics/tagger_lstm_test.json
-        --gpu-id ${vars.gpu}
-        --code scripts/positive_tagger_scorer.py
-    deps:
-      - training/tagger_lstm/model-best
-      - corpus/event_tags-test.spacy
-    outputs:
-      - metrics/tagger_test.json
-
-
   - name: "evaluate-ner-dev"
     help: "Evaluate the default NER pipeline on the development set."
     script:
@@ -415,38 +283,6 @@ commands:
     outputs:
       - metrics/ner_test.json
   
-  - name: "evaluate-ner-lstm-dev"
-    help: "Evaluate the NER pipeline a BiLSTM encoder on the development set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/ner_lstm/model-best
-        corpus/entity_ents-dev.spacy
-        --output metrics/ner_lstm_dev.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/ner_lstm/model-best
-      - corpus/entity_ents-dev.spacy
-    outputs:
-      - metrics/ner_lstm_dev.json
-
-
-  - name: "evaluate-ner-lstm-test"
-    help: "Evaluate the NER pipeline with a BiLSTM encoder on the test set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/ner_lstm/model-best
-        corpus/entity_ents-test.spacy
-        --output metrics/ner_lstm_test.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/ner_lstm/model-best
-      - corpus/entity_ents-dev.spacy
-    outputs:
-      - metrics/ner_lstm_test.json
-
-
   - name: "evaluate-spancat-dev"
     help: "Evaluate the default spancat model on the development set."
     script:
@@ -477,37 +313,6 @@ commands:
     outputs:
       - metrics/spancat_test.json
   
-  - name: "evaluate-spancat-lstm-dev"
-    help: "Evaluate the spancat pipeline with a BiLSTM encoder on the development set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat_lstm/model-best
-        corpus/entity_spans-dev.spacy
-        --output metrics/spancat_lstm_dev.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat_lstm/model-best
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - metrics/spancat_lstm_dev.json
-
-
-  - name: "evaluate-spancat-lstm-test"
-    help: "Evaluate spancat model with a BiLSTM encoder on the test set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat_lstm/model-best
-        corpus/entity_spans-test.spacy
-        --output metrics/spancat_lstm_test.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat_lstm/model-best
-      - corpus/entity_spans-test.spacy
-    outputs:
-      - metrics/spancat_lstm_test.json
-
   - name: "evaluate-spancat-trf-dev"
     help: "Evaluate the spancat pipeline with transformer encoder on the development set."
     script:
@@ -518,7 +323,7 @@ commands:
         --output metrics/spancat_trf_dev.json
         --gpu-id ${vars.gpu}
     deps:
-      - training/spancat_lstm/model-best
+      - training/spancat_trf/model-best
       - corpus/entity_spans-dev.spacy
     outputs:
       - metrics/spancat_trf_dev.json
@@ -569,34 +374,3 @@ commands:
       - corpus/entity_spans-test.spacy
     outputs:
       - metrics/spancat_singlelabel_test.json
-  
-  - name: "evaluate-spancat-singlelabel-lstm-dev"
-    help: "Evaluate the spancat-singlelabel pipeline with a BiLSTM encoder on the development set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat_singlelabel_lstm/model-best
-        corpus/entity_spans-dev.spacy
-        --output metrics/spancat_singlelabel_lstm_dev.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat_singlelabel_lstm/model-best
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - metrics/spancat_singlelabel_lstm_dev.json
-
-
-  - name: "evaluate-spancat-singlelabel-lstm-test"
-    help: "Evaluate the spancat-singlelabel pipeline with a BiLSTM encoder on the test set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat_singlelabel_lstm/model-best
-        corpus/entity_spans-test.spacy
-        --output metrics/spancat_singlelabel_lstm_test.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat_singlelabel_lstm/model-best
-      - corpus/entity_spans-test.spacy
-    outputs:
-      - metrics/spancat_singlelabel_lstm_test.json
