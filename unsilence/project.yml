@@ -1,5 +1,7 @@
 title: "Train NER/spancat on UnSilence VOC"
 
+spacy_version: ">=3.5.3,<4.0.0"
+
 directories: ["configs", "assets", "corpus", "training", "scripts", "metrics"]
 
 assets:
