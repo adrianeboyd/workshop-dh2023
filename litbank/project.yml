@@ -1,4 +1,4 @@
-title: "Train NER and event trigger detection pipelines on LitBank."
+title: "Train NER and SpanCat pipelines on LitBank entity and event annotations."
 
 
 directories: ["configs", "assets", "corpus", "training", "scripts", "metrics"]
@@ -21,30 +21,20 @@ vars:
   dev_ratio: 0.1
   seed: 83
   gpu: 0
-
+  config: "spancat_singlelabel_event"
+  dataset: "event_spans" 
+  eval_split: "dev"
 
 workflows:
   
-  ner:
-    - "train-ner"
-    - "evaluate-ner-test"
-  
-  spancat:
-    - "train-spancat"
-    - "evaluate-spancat-test"
-  
-  spancat-trf:
-    - "train-spancat-trf"
-    - "evaluate-spancat-trf-test"
+  prepare:
+    - prepare-entities
+    - prepare-events
 
-  spancat-singlelabel:
-    - "train-spancat-singlelabel"
-    - "evaluate-spancat-singlelabel-test"
-  
-  tagger:
-    - "train-tagger"
-    - "evaluate-tagger-test"
-  
+  train-pipeline:
+    - train
+    - evaluate
+
 
 commands:
   - name: "prepare-entities"
@@ -52,7 +42,7 @@ commands:
     script:
       - >-
         python -m scripts.prepare prepare-brat -i assets/entities
-        -o corpus/entity_spans.spacy -l en -f
+        -o corpus/entity_spans.spacy -l en -s sc -f
       - >-
         python -m scripts.prepare spans2ents -i corpus/entity_spans.spacy
         -l en -f -s sc -o corpus/entity_ents.spacy
@@ -80,17 +70,14 @@ commands:
       - corpus/entity_ents-dev.spacy
       - corpus/entity_ents-test.spacy
 
-  - name: "prepare-event"
+  - name: "prepare-events"
     help: "Prepare the LitBank events for use in spaCy."
     script:
       - >-
         python -m scripts.prepare prepare-brat -i assets/events
-        -o corpus/event_spans.spacy -l en -f
-      - >-
-        python -m scripts.prepare spans2tags -i corpus/event_spans.spacy
-        -l en -f -s sc -o corpus/event_tags.spacy
+        -o corpus/event_spans.spacy -l en -s events -f
       - >- 
-        python -m scripts.prepare split -i corpus/event_tags.spacy
+        python -m scripts.prepare split -i corpus/event_spans.spacy
         -t ${vars.train_ratio} -d ${vars.dev_ratio}
         -l en -se ${vars.seed} --shuffle
     
@@ -98,82 +85,28 @@ commands:
       - assets/events
     outputs:
       - corpus/event_spans.spacy
-      - corpus/event_tags-train.spacy
-      - corpus/event_tags-dev.spacy
-      - corpus/event_tags-test.spacy
+      - corpus/event_spans-train.spacy
+      - corpus/event_spans-dev.spacy
+      - corpus/event_spans-test.spacy
 
 
-  - name: "train-ner"
+  - name: "train"
     help: "Train the default NER pipeline."
     script:
       - >-
         python -m spacy train
-        configs/ner.cfg
-        --output training/ner
-        --paths.train corpus/entity_ents-train.spacy
-        --paths.dev corpus/entity_ents-dev.spacy
+        configs/${vars.config}.cfg
+        --output training/${vars.config}
+        --paths.train corpus/${vars.dataset}-train.spacy
+        --paths.dev corpus/${vars.dataset}-dev.spacy
         --system.seed ${vars.seed}
         --gpu-id ${vars.gpu}
     deps:
-      - corpus/entity_ents-train.spacy
-      - corpus/entity_ents-dev.spacy
+      - corpus/${vars.dataset}-train.spacy
+      - corpus/${vars.dataset}-dev.spacy
     outputs:
-      - training/ner
+      - training/${vars.config}
 
-  
-  - name: "train-ner-trf"
-    help: "Train the ner pipeline with an transformer encoder."
-    script:
-      - >-
-        python -m spacy train
-        configs/ner_trf.cfg
-        --output training/ner_trf
-        --paths.train corpus/entity_ents-train.spacy
-        --paths.dev corpus/entity_ents-dev.spacy
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-    deps:
-      - corpus/entity_ents-train.spacy
-      - corpus/entity_ents-dev.spacy
-    outputs:
-      - training/ner_trf
-
-  - name: "train-spancat"
-    help: "Train the default spancat pipeline."
-    script:
-      - >-
-        python -m spacy train
-        configs/spancat.cfg
-        --output training/spancat
-        --paths.train corpus/entity_spans-train.spacy
-        --paths.dev corpus/entity_spans-dev.spacy
-        --paths.vectors en_core_web_lg
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-    deps:
-      - corpus/entity_spans-train.spacy
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - training/spancat
-  
-  - name: "train-spancat-trf"
-    help: "Train the spancat pipeline with an transformer encoder."
-    script:
-      - >-
-        python -m spacy train
-        configs/spancat_trf.cfg
-        --output training/spancat_trf
-        --paths.train corpus/entity_spans-train.spacy
-        --paths.dev corpus/entity_spans-dev.spacy
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-    deps:
-      - corpus/entity_spans-train.spacy
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - training/spancat_trf
-
-  
   - name: "find-threshold"
     help: "Find classifier threshold for spancat."
     script:
@@ -183,194 +116,18 @@ commands:
     deps:
       - training/spancat/model-best
 
-  - name: "train-spancat-singlelabel"
-    help: "Train the default spancat-singlelabel pipeline."
-    script:
-      - >-
-        python -m spacy train
-        configs/spancat_singlelabel.cfg
-        --output training/spancat_singlelabel
-        --paths.train corpus/entity_spans-train.spacy
-        --paths.dev corpus/entity_spans-dev.spacy
-        --paths.vectors en_core_web_lg
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-    deps:
-      - corpus/entity_spans-train.spacy
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - training/spancat_singlelabel
   
-  - name: "train-tagger"
-    help: "Train the default tagger pipeline."
-    script:
-      - >-
-        python -m spacy train
-        configs/tagger.cfg
-        --output training/tagger
-        --paths.train corpus/event_tags-train.spacy
-        --paths.dev corpus/event_tags-dev.spacy
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-        --code scripts/positive_tagger_scorer.py
-        --paths.vectors en_core_web_lg
-    deps:
-      - corpus/event_tags-train.spacy
-      - corpus/event_tags-dev.spacy
-    outputs:
-      - training/tagger
-  
-  - name: "evaluate-tagger-dev"
-    help: "Evaluate the default tagger pipeline on the development set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/tagger/model-best
-        corpus/event_tags-dev.spacy
-        --output metrics/tagger_dev.json
-        --gpu-id ${vars.gpu}
-        --code scripts/positive_tagger_scorer.py
-    deps:
-      - training/tagger/model-best
-      - corpus/event_tags-dev.spacy
-    outputs:
-      - metrics/tagger_dev.json
-  
-  - name: "evaluate-tagger-test"
-    help: "Evaluate the default tagger pipeline on the test set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/tagger/model-best
-        corpus/event_tags-test.spacy
-        --output metrics/tagger_test.json
-        --gpu-id ${vars.gpu}
-        --code scripts/positive_tagger_scorer.py
-    deps:
-      - training/tagger/model-best
-      - corpus/event_tags-test.spacy
-    outputs:
-      - metrics/tagger_test.json
-  
-  - name: "evaluate-ner-dev"
+  - name: "evaluate"
     help: "Evaluate the default NER pipeline on the development set."
     script:
       - >-
         python -m spacy evaluate
-        training/ner/model-best
-        corpus/entity_ents-dev.spacy
-        --output metrics/ner_dev.json
+        training/${vars.config}/model-best
+        corpus/${vars.dataset}-${vars.eval_split}.spacy
+        --output metrics/${vars.dataset}_${vars.eval_split}.json
         --gpu-id ${vars.gpu}
     deps:
-      - training/ner/model-best
-      - corpus/entity_ents-dev.spacy
+      - training/${vars.config}/model-best
+      - corpus/${vars.dataset}-${vars.eval_split}.spacy
     outputs:
-      - metrics/ner_dev.json
-
-
-  - name: "evaluate-ner-test"
-    help: "Evaluate the default NER pipeline on the test set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/ner/model-best
-        corpus/entity_ents-test.spacy
-        --output metrics/ner_test.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/ner/model-best
-      - corpus/entity_ents-test.spacy
-    outputs:
-      - metrics/ner_test.json
-  
-  - name: "evaluate-spancat-dev"
-    help: "Evaluate the default spancat model on the development set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat/model-best
-        corpus/entity_spans-dev.spacy
-        --output metrics/spancat_dev.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat/model-best
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - metrics/spancat_dev.json
-
-  - name: "evaluate-spancat-test"
-    help: "Evaluate default spancat pipeline on the test set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat/model-best
-        corpus/entity_spans-test.spacy
-        --output metrics/spancat_test.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat/model-best
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - metrics/spancat_test.json
-  
-  - name: "evaluate-spancat-trf-dev"
-    help: "Evaluate the spancat pipeline with transformer encoder on the development set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat_trf/model-best
-        corpus/entity_spans-dev.spacy
-        --output metrics/spancat_trf_dev.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat_trf/model-best
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - metrics/spancat_trf_dev.json
-
-
-  - name: "evaluate-spancat-trf-test"
-    help: "Evaluate spancat model with a transformer encoder on the test set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat_trf/model-best
-        corpus/entity_spans-test.spacy
-        --output metrics/spancat_trf_test.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat_trf/model-best
-      - corpus/entity_spans-test.spacy
-    outputs:
-      - metrics/spancat_trf_test.json
-
-  - name: "evaluate-spancat-singlelabel-dev"
-    help: "Evaluate the default spancat-singlelabel pipeline on the development set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat_singlelabel/model-best
-        corpus/entity_spans-dev.spacy
-        --output metrics/spancat_singlelabel_dev.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat_singlelabel/model-best
-      - corpus/entity_spans-dev.spacy
-    outputs:
-      - metrics/spancat_singlelabel_dev.json
-  
-
-  - name: "evaluate-spancat-singlelabel-test"
-    help: "Evaluate the default spancat-singlelabel pipeline on the test set."
-    script:
-      - >-
-        python -m spacy evaluate
-        training/spancat_singlelabel/model-best
-        corpus/entity_spans-test.spacy
-        --output metrics/spancat_singlelabel_test.json
-        --gpu-id ${vars.gpu}
-    deps:
-      - training/spancat_singlelabel/model-best
-      - corpus/entity_spans-test.spacy
-    outputs:
-      - metrics/spancat_singlelabel_test.json
+      - metrics/${vars.dataset}_${vars.eval_split}.json
