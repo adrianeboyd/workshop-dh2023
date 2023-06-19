@@ -51,13 +51,15 @@ def _train_dev_test_split(
     input_dir=Arg("--input-dir", "-i", help="Path to .txt and .ann files."),
     output_file=Arg("--output-file", "-o", help="Path to write .spacy file."),
     lang=Arg("--lang", "-l", help="Language of the dataset"),
-    force=Arg("--force", "-f", help="Force overwrite output_file if exists.")
+    force=Arg("--force", "-f", help="Force overwrite output_file if exists."),
+    span_key=Arg("--span-key", "-s", help="Key to store the spans on the Doc.")
 )
 def prepare_brat(
     input_dir: str,
     output_file: str,
     lang: str,
-    force: bool
+    force: bool,
+    span_key: str
 ) -> None:
     docbin = DocBin()
     nlp = spacy.blank(lang)
@@ -101,7 +103,7 @@ def prepare_brat(
                 )
                 spans.append(span)
 
-            doc.spans["sc"] = spans
+            doc.spans[span_key] = spans
             docbin.add(doc)
             documents += 1
     docbin.to_disk(output_file)
@@ -213,61 +215,6 @@ def spans2ents(
         filtered += len(doc.spans[span_key]) - len(spans)
         total += len(doc.spans[span_key])
         doc.set_ents(spans)
-        newdb.add(doc)
-    msg.info(
-        f"Out of total {total} spans {filtered} were "
-        f"filtered out. Kept {total - filtered}."
-    )
-    newdb.to_disk(output_file)
-
-
-@cli.command(
-    "spans2tags",
-    input_file=Arg("--input-file", "-i", help="Path to .spacy file."),
-    output_file=Arg("--output-file", "-o", help="Path to write .spacy file."),
-    span_key=Arg("--span-key", "-s", help="Span key to transfer to ents."),
-    lang=Arg("--lang", "-l", help="Language of the dataset."),
-    force=Arg("--force", "-f", help="Force overwrite output_file if exists.")
-)
-def spans2tags(
-    input_file: str,
-    output_file: str,
-    span_key: str,
-    lang: str,
-    force: bool
-) -> None:
-    input_file = ensure_path(input_file)
-    output_file = ensure_path(output_file)
-    if not input_file.exists():
-        msg.warn(f"Could not find {input_file}.", exits=1)
-    if input_file.is_dir():
-        raise msg.warn(
-            "'input_dir' should be a file not a directory.", exits=1
-        )
-    if not output_file.exists() and not force:
-        raise msg.warn(
-            f"{output_file} already exists. "
-            "Use the -f or --force option to overwrite it.",
-            exits=1
-        )
-    nlp = spacy.blank(lang)
-    db = DocBin().from_disk(input_file)
-    newdb = DocBin()
-    docs = list(db.get_docs(nlp.vocab))
-    msg.good(f"Loaded {len(docs)}.")
-    filtered = 0
-    total = 0
-    for doc in docs:
-        spans = list(filter_spans(doc.spans[span_key]))
-        idxs = {span.start: span.label_ for span in spans if len(span) == 1}
-        for token in doc:
-            idx = token.i
-            if idx in idxs:
-                token.tag_ = idxs[idx]
-            else:
-                token.tag_ = "O"
-        filtered += len(doc.spans[span_key]) - len(idxs)
-        total += len(doc.spans[span_key])
         newdb.add(doc)
     msg.info(
         f"Out of total {total} spans {filtered} were "
