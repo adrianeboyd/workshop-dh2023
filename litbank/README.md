@@ -2,6 +2,24 @@
 
 # 🪐 spaCy Project: Train NER and SpanCat pipelines on LitBank entity and event annotations.
 
+This project was used in the DH2023 Workshop in Graz to demonstrate how to
+use spaCy to quickly put together useful pipelines.
+
+The [LitBank dataset](https://github.com/dbamman/litbank/) is a collection of a 100 works of fiction
+publicly available from Project Gutenberg majority of which were published between 1852 and 1911.
+Each document is approximately the first 2000 words of the novels leading to a total of
+210532 tokens in the entire data set. It has multiple layers of annotation, but
+here we only focus on the Named Entity and Event annotations. 
+To learn about the entity annotations please checkout
+[this paper](https://people.ischool.berkeley.edu/~dbamman/pubs/pdf/naacl2019_literary_entities.pdf)
+and [this one](https://aclanthology.org/P19-1353.pdf) for the event annotations.
+
+Most config files in [`litbank_pipeline/configs`](litbank_pipeline/configs) project
+were generated with an appropriate
+[`init config`](https://spacy.io/api/cli#init-config) command.
+
+
+
 ## 📋 project.yml
 
 The [`project.yml`](project.yml) defines the data assets required by the
