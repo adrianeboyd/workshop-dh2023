@@ -11,8 +11,7 @@ from wasabi import msg
 
 cli = Radicli(
     help=(
-        "I am a small radicli app that preprocesses "
-        "a data set in brat format data set for use in spaCy. "
+        "Preprocess data sets in brat format for use with spancat and ner."
     )
 )
 
@@ -49,10 +48,10 @@ def _train_dev_test_split(
 @cli.command(
     "prepare-brat",
     input_dir=Arg("--input-dir", "-i", help="Path to .txt and .ann files."),
-    output_file=Arg("--output-file", "-o", help="Path to write .spacy file."),
+    output_file=Arg("--output-file", "-o", help="Path to save .spacy file."),
     lang=Arg("--lang", "-l", help="Language of the dataset"),
     force=Arg("--force", "-f", help="Force overwrite output_file if exists."),
-    span_key=Arg("--span-key", "-s", help="Key to store the spans on the Doc.")
+    span_key=Arg("--span-key", "-s", help="Key to store the spans on the Doc (doc.spans['span_key']).")
 )
 def prepare_brat(
     input_dir: str,
@@ -61,6 +60,8 @@ def prepare_brat(
     force: bool,
     span_key: str
 ) -> None:
+    """Prepare data set in brat format for use in spaCy.
+    Stores annotations in doc.spans["span_key"]."""
     docbin = DocBin()
     nlp = spacy.blank(lang)
     input_dir = ensure_path(input_dir)
@@ -112,10 +113,10 @@ def prepare_brat(
 
 @cli.command(
     "split",
-    input_file=Arg("--input-file", "-i", help="Path to write .spacy file."),
+    input_file=Arg("--input-file", "-i", help="Path to .spacy file to split."),
     lang=Arg("--lang", "-l", help="Language of the dataset."),
-    train_ratio=Arg("--train-ratio", "-t", help="Language of the dataset"),
-    dev_ratio=Arg("--dev-ratio", "-d", help="Force overwrite output_file if exists."),
+    train_ratio=Arg("--train-ratio", "-t", help="Portion of the documents to keep for training."),
+    dev_ratio=Arg("--dev-ratio", "-d", help="Portion of the documents to keep for development."),
     shuffle=Arg("--shuffle", "-sh", help="Shuffle input docs before splitting."),
     seed=Arg("--seed", "-se", help="Random seed for shuffling.")
 )
@@ -127,6 +128,8 @@ def split(
     shuffle: bool,
     seed: int
 ) -> None:
+    """Split the document collection in a .spacy file into three
+    portions: training set, development set and test set."""
     input_file = ensure_path(input_file)
     if input_file.is_dir():
         raise msg.warn(
@@ -177,8 +180,8 @@ def split(
 @cli.command(
     "spans2ents",
     input_file=Arg("--input-file", "-i", help="Path to .spacy file."),
-    output_file=Arg("--output-file", "-o", help="Path to write .spacy file."),
-    span_key=Arg("--span-key", "-s", help="Span key to transfer to ents."),
+    output_file=Arg("--output-file", "-o", help="Path to save new .spacy file."),
+    span_key=Arg("--span-key", "-s", help="Span key to transfer the ents to."),
     lang=Arg("--lang", "-l", help="Language of the dataset."),
     force=Arg("--force", "-f", help="Force overwrite output_file if exists.")
 )
@@ -189,6 +192,8 @@ def spans2ents(
     lang: str,
     force: bool
 ) -> None:
+    """Copy the contents of the doc.spans["span_key"]
+    into doc.ents in a .spacy file."""
     input_file = ensure_path(input_file)
     output_file = ensure_path(output_file)
     if not input_file.exists():
