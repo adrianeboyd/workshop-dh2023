@@ -16,7 +16,7 @@ vars:
   train_ratio: 0.8
   dev_ratio: 0.1
   seed: 83
-  gpu: 0
+  gpu: -1
 
 
 workflows:
