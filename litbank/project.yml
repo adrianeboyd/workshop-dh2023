@@ -1,4 +1,4 @@
-title: "Train NER and SpanCat pipelines on LitBank entity and event annotations."
+title: "Train spancat_singlelabel pipelines on LitBank entity and event annotations."
 
 
 directories: ["configs", "assets", "corpus", "training", "scripts", "metrics"]
@@ -21,9 +21,7 @@ vars:
   dev_ratio: 0.1
   seed: 83
   gpu: 0
-  config: "spancat_singlelabel_event"
-  dataset: "event_spans" 
-  eval_split: "dev"
+
 
 workflows:
   
@@ -32,8 +30,10 @@ workflows:
     - prepare-events
 
   train-pipeline:
-    - train
-    - evaluate
+    - train-entities
+    - evaluate-entities
+    - train-events
+    - evaluate-events
 
 
 commands:
@@ -58,6 +58,10 @@ commands:
         python -m spacy debug data configs/spancat.cfg
         --paths.train corpus/entity_spans-train.spacy
         --paths.dev corpus/entity_spans-dev.spacy
+      - >-
+        python -m spacy debug data configs/spancat.cfg
+        --paths.train corpus/event_spans-train.spacy
+        --paths.dev corpus/event_spans-dev.spacy
     deps:
       - assets/entities
     outputs:
@@ -90,44 +94,66 @@ commands:
       - corpus/event_spans-test.spacy
 
 
-  - name: "train"
-    help: "Train the default NER pipeline."
+  - name: "train-entities"
+    help: "Train the spancat_singlelabel pipeline on the LitBank entities annotation."
     script:
       - >-
         python -m spacy train
-        configs/${vars.config}.cfg
-        --output training/${vars.config}
-        --paths.train corpus/${vars.dataset}-train.spacy
-        --paths.dev corpus/${vars.dataset}-dev.spacy
+        configs/spancat_singlelabel.cfg
+        --output training/spancat_singlelabel_entities
+        --paths.train corpus/entity_spans-train.spacy
+        --paths.dev corpus/entity_spans-dev.spacy
         --system.seed ${vars.seed}
         --gpu-id ${vars.gpu}
     deps:
-      - corpus/${vars.dataset}-train.spacy
-      - corpus/${vars.dataset}-dev.spacy
+      - corpus/entity_spans-train.spacy
+      - corpus/entity_spans-dev.spacy
     outputs:
-      - training/${vars.config}
-
-  - name: "find-threshold"
-    help: "Find classifier threshold for spancat."
-    script:
-      - >- 
-        python -m spacy find-threshold training/spancat/model-best
-        corpus/entity_spans-dev.spacy spancat threshold spans_sc_f
-    deps:
-      - training/spancat/model-best
-
+      - training/spancat_singlelabel_entities
   
-  - name: "evaluate"
-    help: "Evaluate the default NER pipeline on the development set."
+  - name: "train-events"
+    help: "Train spancat_singlelabel pipeline on the LitBank events annotation."
+    script:
+      - >-
+        python -m spacy train
+        configs/spancat_singlelabel_events.cfg
+        --output training/spancat_singlelabel_events
+        --paths.train corpus/event_spans-train.spacy
+        --paths.dev corpus/event_spans-dev.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - corpus/event_spans-train.spacy
+      - corpus/event_spans-dev.spacy
+    outputs:
+      - training/spancat_singlelabel_events
+  
+  - name: "evaluate-entities"
+    help: "Evaluate the spancat_singlelabel pipeline trained on entities."
     script:
       - >-
         python -m spacy evaluate
-        training/${vars.config}/model-best
-        corpus/${vars.dataset}-${vars.eval_split}.spacy
-        --output metrics/${vars.dataset}_${vars.eval_split}.json
+        training/spancat_singlelabel_entities/model-best
+        corpus/entity_spans-test.spacy
+        --output metrics/spancat_singlelabel_entities.json
         --gpu-id ${vars.gpu}
     deps:
-      - training/${vars.config}/model-best
-      - corpus/${vars.dataset}-${vars.eval_split}.spacy
+      - training/spancat_singlelabel_entities/model-best
+      - corpus/entity_spans-test.spacy
     outputs:
-      - metrics/${vars.dataset}_${vars.eval_split}.json
+      - corpus/entity_spans-test.spacy
+
+  - name: "evaluate-events"
+    help: "Evaluate the spancat_singlelabel pipeline trained on events."
+    script:
+      - >-
+        python -m spacy evaluate
+        training/spancat_singlelabel_events/model-best
+        corpus/event_spans-test.spacy
+        --output metrics/spancat_singlelabel_events.json
+        --gpu-id ${vars.gpu}
+    deps:
+      - training/spancat_singlelabel_events/model-best
+      - corpus/event_spans-test.spacy
+    outputs:
+      - corpus/event_spans-test.spacy
