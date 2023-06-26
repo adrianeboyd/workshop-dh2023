@@ -21,6 +21,7 @@ vars:
   dev_ratio: 0.1
   seed: 83
   gpu: 0
+  config: "spancat_singlelabel"
 
 
 workflows:
@@ -42,10 +43,10 @@ commands:
     script:
       - >-
         python -m scripts.prepare prepare-brat -i assets/entities
-        -o corpus/entity_spans.spacy -l en -s sc -f
+        -o corpus/entity_spans.spacy -l en -s entities -f
       - >-
         python -m scripts.prepare spans2ents -i corpus/entity_spans.spacy
-        -l en -f -s sc -o corpus/entity_ents.spacy
+        -l en -f -s entities -o corpus/entity_ents.spacy
       - >- 
         python -m scripts.prepare split -i corpus/entity_spans.spacy
         -t ${vars.train_ratio} -d ${vars.dev_ratio}
@@ -55,15 +56,13 @@ commands:
         -t ${vars.train_ratio} -d ${vars.dev_ratio}
         -l en -se ${vars.seed} --shuffle
       - >-
-        python -m spacy debug data configs/spancat.cfg
+        python -m spacy debug data configs/${vars.config}.cfg
         --paths.train corpus/entity_spans-train.spacy
         --paths.dev corpus/entity_spans-dev.spacy
-      - >-
-        python -m spacy debug data configs/spancat.cfg
-        --paths.train corpus/event_spans-train.spacy
-        --paths.dev corpus/event_spans-dev.spacy
+        --components.spancat_singlelabel.spans_key entities
     deps:
       - assets/entities
+      - configs/${vars.config}.cfg
     outputs:
       - corpus/entity_spans.spacy
       - corpus/entity_ents.spacy
@@ -84,9 +83,14 @@ commands:
         python -m scripts.prepare split -i corpus/event_spans.spacy
         -t ${vars.train_ratio} -d ${vars.dev_ratio}
         -l en -se ${vars.seed} --shuffle
-    
+      - >-
+        python -m spacy debug data configs/${vars.config}.cfg
+        --paths.train corpus/event_spans-train.spacy
+        --paths.dev corpus/event_spans-dev.spacy
+        --components.spancat_singlelabel.spans_key events
     deps:
       - assets/events
+      - configs/${vars.config}.cfg
     outputs:
       - corpus/event_spans.spacy
       - corpus/event_spans-train.spacy
@@ -99,61 +103,75 @@ commands:
     script:
       - >-
         python -m spacy train
-        configs/spancat_singlelabel.cfg
-        --output training/spancat_singlelabel_entities
+        configs/${vars.config}.cfg
+        --components.spancat_singlelabel.spans_key entities
+        --components.spancat_singlelabel.suggester.sizes '[1,2,3,4,5,6]'
+        --training.score_weights.spans_entities_f 1.0
+        --training.score_weights.spans_entities_p 0.0
+        --training.score_weights.spans_entities_r 0.0
+        --output training/${vars.config}_entities
         --paths.train corpus/entity_spans-train.spacy
         --paths.dev corpus/entity_spans-dev.spacy
         --system.seed ${vars.seed}
         --gpu-id ${vars.gpu}
     deps:
+      - configs/${vars.config}.cfg
       - corpus/entity_spans-train.spacy
       - corpus/entity_spans-dev.spacy
     outputs:
-      - training/spancat_singlelabel_entities
+      - training/${vars.config}_entities
   
   - name: "train-events"
     help: "Train spancat_singlelabel pipeline on the LitBank events annotation."
     script:
       - >-
         python -m spacy train
-        configs/spancat_singlelabel_events.cfg
-        --output training/spancat_singlelabel_events
+        configs/${vars.config}.cfg
+        --components.spancat_singlelabel.spans_key events
+        --components.spancat_singlelabel.suggester.sizes '[1]'
+        --training.score_weights.spans_events_f 1.0
+        --training.score_weights.spans_events_p 0.0
+        --training.score_weights.spans_events_r 0.0
+        --output training/${vars.config}_events
         --paths.train corpus/event_spans-train.spacy
         --paths.dev corpus/event_spans-dev.spacy
         --system.seed ${vars.seed}
         --gpu-id ${vars.gpu}
     deps:
+      - configs/${vars.config}.cfg
       - corpus/event_spans-train.spacy
       - corpus/event_spans-dev.spacy
     outputs:
-      - training/spancat_singlelabel_events
+      - training/${vars.config}_events
   
   - name: "evaluate-entities"
     help: "Evaluate the spancat_singlelabel pipeline trained on entities."
     script:
       - >-
         python -m spacy evaluate
-        training/spancat_singlelabel_entities/model-best
+        training/${vars.config}_entities/model-best
         corpus/entity_spans-test.spacy
-        --output metrics/spancat_singlelabel_entities.json
+        --output metrics/${vars.config}_entities.json
         --gpu-id ${vars.gpu}
     deps:
-      - training/spancat_singlelabel_entities/model-best
+      - training/${vars.config}_entities/model-best
       - corpus/entity_spans-test.spacy
     outputs:
       - corpus/entity_spans-test.spacy
+      - metrics/${vars.config}_entities.json
 
   - name: "evaluate-events"
     help: "Evaluate the spancat_singlelabel pipeline trained on events."
     script:
       - >-
         python -m spacy evaluate
-        training/spancat_singlelabel_events/model-best
+        training/${vars.config}_events/model-best
         corpus/event_spans-test.spacy
-        --output metrics/spancat_singlelabel_events.json
+        --output metrics/${vars.config}_events.json
         --gpu-id ${vars.gpu}
     deps:
-      - training/spancat_singlelabel_events/model-best
+      - training/${vars.config}_events/model-best
       - corpus/event_spans-test.spacy
     outputs:
       - corpus/event_spans-test.spacy
+      - metrics/${vars.config}_events.json
