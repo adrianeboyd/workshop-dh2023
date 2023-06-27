@@ -1,0 +1,37 @@
+site_name: Digital Humanities Applications of spaCy’s Span Categorizer
+theme:
+  name: material
+  font:
+    text: Inconsolata
+  icon:
+    logo: material/cat
+  favicon: images/favicon.png
+  palette:
+  - media: '(prefers-color-scheme: light)'
+    scheme: default
+    primary: deep purple
+    accent: light blue
+    toggle:
+      icon: material/shimmer
+      name: Switch to light mode
+  - media: '(prefers-color-scheme: dark)'
+    scheme: slate
+    primary: blue grey
+    accent: light blue
+    toggle:
+      icon: material/weather-sunny
+      name: Switch to dark mode
+  features:
+  - search.suggest
+  - search.highlight
+  - content.tabs.link
+extra:
+  generator: false
+
+markdown_extensions:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji 
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+extra_css:
+  - stylesheets/extra.css
