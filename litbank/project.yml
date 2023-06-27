@@ -1,7 +1,15 @@
-title: "Train spancat_singlelabel pipelines on LitBank entity and event annotations."
-
+title: "Train spancat pipelines on LitBank entity and event annotations."
 
 directories: ["configs", "assets", "corpus", "training", "scripts", "metrics"]
+
+vars:
+  train_ratio: 0.8
+  dev_ratio: 0.1
+  seed: 83
+  config: "spancat"
+  gpu: -1
+  #config: "spancat_trf"
+  #gpu: 0
 
 assets:
   - dest: "assets/entities/"
@@ -16,26 +24,17 @@ assets:
       branch: "master"
       path: "events/brat/"
 
-vars:
-  train_ratio: 0.8
-  dev_ratio: 0.1
-  seed: 83
-  gpu: 0
-  config: "spancat_singlelabel"
-
-
 workflows:
-  
   prepare:
     - prepare-entities
     - prepare-events
+    - download-vectors
 
-  train-pipeline:
+  train:
     - train-entities
     - evaluate-entities
     - train-events
     - evaluate-events
-
 
 commands:
   - name: "prepare-entities"
@@ -55,11 +54,11 @@ commands:
         python -m scripts.prepare split -i corpus/entity_ents.spacy
         -t ${vars.train_ratio} -d ${vars.dev_ratio}
         -l en -se ${vars.seed} --shuffle
-      - >-
-        python -m spacy debug data configs/${vars.config}.cfg
-        --paths.train corpus/entity_spans-train.spacy
-        --paths.dev corpus/entity_spans-dev.spacy
-        --components.spancat_singlelabel.spans_key entities
+#      - >-
+#        python -m spacy debug data configs/${vars.config}.cfg
+#        --paths.train corpus/entity_spans-train.spacy
+#        --paths.dev corpus/entity_spans-dev.spacy
+#        --components.spancat.spans_key entities
     deps:
       - assets/entities
       - configs/${vars.config}.cfg
@@ -83,11 +82,11 @@ commands:
         python -m scripts.prepare split -i corpus/event_spans.spacy
         -t ${vars.train_ratio} -d ${vars.dev_ratio}
         -l en -se ${vars.seed} --shuffle
-      - >-
-        python -m spacy debug data configs/${vars.config}.cfg
-        --paths.train corpus/event_spans-train.spacy
-        --paths.dev corpus/event_spans-dev.spacy
-        --components.spancat_singlelabel.spans_key events
+#      - >-
+#        python -m spacy debug data configs/${vars.config}.cfg
+#        --paths.train corpus/event_spans-train.spacy
+#        --paths.dev corpus/event_spans-dev.spacy
+#        --components.spancat.spans_key events
     deps:
       - assets/events
       - configs/${vars.config}.cfg
@@ -97,15 +96,19 @@ commands:
       - corpus/event_spans-dev.spacy
       - corpus/event_spans-test.spacy
 
+  - name: "download-vectors"
+    help: "Download en_core_web_lg for vectors"
+    script:
+      - python -m spacy download en_core_web_lg
 
   - name: "train-entities"
-    help: "Train the spancat_singlelabel pipeline on the LitBank entities annotation."
+    help: "Train the spancat pipeline on the LitBank entities annotation."
     script:
       - >-
         python -m spacy train
         configs/${vars.config}.cfg
-        --components.spancat_singlelabel.spans_key entities
-        --components.spancat_singlelabel.suggester.sizes '[1,2,3,4,5,6]'
+        --components.spancat.spans_key entities
+        --components.spancat.suggester.sizes '[1,2,3,4,5,6]'
         --training.score_weights.spans_entities_f 1.0
         --training.score_weights.spans_entities_p 0.0
         --training.score_weights.spans_entities_r 0.0
@@ -122,13 +125,13 @@ commands:
       - training/${vars.config}_entities
   
   - name: "train-events"
-    help: "Train spancat_singlelabel pipeline on the LitBank events annotation."
+    help: "Train spancat pipeline on the LitBank events annotation."
     script:
       - >-
         python -m spacy train
         configs/${vars.config}.cfg
-        --components.spancat_singlelabel.spans_key events
-        --components.spancat_singlelabel.suggester.sizes '[1]'
+        --components.spancat.spans_key events
+        --components.spancat.suggester.sizes '[1]'
         --training.score_weights.spans_events_f 1.0
         --training.score_weights.spans_events_p 0.0
         --training.score_weights.spans_events_r 0.0
@@ -145,7 +148,7 @@ commands:
       - training/${vars.config}_events
   
   - name: "evaluate-entities"
-    help: "Evaluate the spancat_singlelabel pipeline trained on entities."
+    help: "Evaluate the spancat pipeline trained on entities."
     script:
       - >-
         python -m spacy evaluate
@@ -161,7 +164,7 @@ commands:
       - metrics/${vars.config}_entities.json
 
   - name: "evaluate-events"
-    help: "Evaluate the spancat_singlelabel pipeline trained on events."
+    help: "Evaluate the spancat pipeline trained on events."
     script:
       - >-
         python -m spacy evaluate

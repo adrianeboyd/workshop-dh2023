@@ -1,0 +1,17 @@
+{
+  "token_acc":1.0,
+  "token_p":1.0,
+  "token_r":1.0,
+  "token_f":1.0,
+  "spans_events_p":0.7589403974,
+  "spans_events_r":0.8025210084,
+  "spans_events_f":0.7801225323,
+  "spans_events_per_type":{
+    "EVENT":{
+      "p":0.7589403974,
+      "r":0.8025210084,
+      "f":0.7801225323
+    }
+  },
+  "speed":7358.2409992599
+}
