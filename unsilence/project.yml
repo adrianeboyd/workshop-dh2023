@@ -1,14 +1,14 @@
 title: "Train NER/spancat on UnSilence VOC"
 
-spacy_version: ">=3.5.3,<4.0.0"
+spacy_version: ">=3.6.0.dev1,<4.0.0"
 
 directories: ["configs", "assets", "corpus", "training", "scripts", "metrics"]
 
 assets:
   - dest: "assets/UnSilence_VOC"
     git:
-      repo: "https://github.com/adrianeboyd/UnSilence_VOC/"
-      branch: "bugfix/processed-data-splits"
+      repo: "https://github.com/budh333/UnSilence_VOC"
+      branch: "main"
       path: ""
 
 vars:
