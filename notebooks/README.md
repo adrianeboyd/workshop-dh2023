@@ -2,6 +2,7 @@
 | --------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | [`01_intro_to_spacy`][01_intro_to_spacy]<br />[![Open in Colab][colab]][01_intro_to_spacy_colab]                | Intro to spaCy                   |
 | [`03_litbank_data`][03_litbank_data]<br />[![Open in Colab][colab]][03_litbank_data_colab]                      | Inspect litbank spans data       |
+| [`04_litbank_training`][04_litbank_training]<br />[![Open in Colab][colab]][04_litbank_training_colab]          | Train unsilence spancat pipeline |
 | [`05_litbank_pipelines`][05_litbank_pipelines]<br />[![Open in Colab][colab]][05_litbank_pipelines_colab]       | Run litbank spancat pipeline     |
 | [`06_unsilence_data`][06_unsilence_data]<br />[![Open in Colab][colab]][06_unsilence_data_colab]                | Inspect unsilence spans data     |
 | [`07_unsilence_training`][07_unsilence_training]<br />[![Open in Colab][colab]][07_unsilence_training_colab]    | Train unsilence spancat pipeline |
@@ -15,6 +16,9 @@
 [03_litbank_data]: 03_litbank_data.ipynb
 [03_litbank_data_colab]:
   https://colab.research.google.com/github/adrianeboyd/workshop-dh2023/blob/main/notebooks/03_litbank_data.ipynb
+[04_litbank_training]: 04_litbank_training.ipynb
+[04_litbank_training_colab]:
+  https://colab.research.google.com/github/adrianeboyd/workshop-dh2023/blob/main/notebooks/04_litbank_training.ipynb
 [05_litbank_pipelines]: 05_litbank_pipelines.ipynb
 [05_litbank_pipelines_colab]:
   https://colab.research.google.com/github/adrianeboyd/workshop-dh2023/blob/main/notebooks/05_litbank_pipelines.ipynb
