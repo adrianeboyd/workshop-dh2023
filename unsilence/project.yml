@@ -32,13 +32,12 @@ workflows:
     - "train-ner-trf"
     - "evaluate-ner"
 
-  spancat:
+  ngram-spancat:
     - "train-spancat"
     - "train-spancat-trf"
     - "evaluate-spancat"
 
-  span-finder:
-    - "train-span-finder"
+  span-finder-spancat:
     - "train-span-finder-spancat"
     - "train-span-finder-spancat-trf"
     - "evaluate-span-finder-spancat"
@@ -48,7 +47,7 @@ commands:
     help: "Download and install Dutch floret vectors"
     script:
       - >-
-        python -m pip install https://github.com/explosion/spacy-vectors-builder/releases/download/nl-dh2023-v0.0.1/nl_vectors_floret_lg-0.0.1-py3-none-any.whl
+        python -m pip install https://github.com/explosion/spacy-vectors-builder/releases/download/nl-dh2023-v0.0.1/nl_vectors_floret_lg-0.0.2-py3-none-any.whl
 
   - name: "convert-data-ner"
     help: "Prepare the NER per type data for spaCy"
@@ -292,24 +291,6 @@ commands:
     outputs:
       - metrics/spancat.json
       - metrics/spancat_trf.json
-
-  - name: "train-span-finder"
-    help: "Train the span finder pipeline."
-    script:
-      - >-
-        python -m spacy train
-        configs/span_finder.cfg
-        --output training/span_finder
-        --paths.train corpus/train-nl.spans.spacy
-        --paths.dev corpus/dev-nl.spans.spacy
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-    deps:
-      - configs/span_finder.cfg
-      - corpus/train-nl.spans.spacy
-      - corpus/dev-nl.spans.spacy
-    outputs:
-      - training/span_finder
 
   - name: "train-span-finder-spancat"
     help: "Train the span finder spancat pipeline."
