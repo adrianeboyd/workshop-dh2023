@@ -30,11 +30,13 @@ workflows:
     - prepare-events
     - download-vectors
 
-  train:
-    - train-entities
-    - evaluate-entities
-    - train-events
-    - evaluate-events
+  train-entities:
+    - train-spancat-entities
+    - evaluate-spancat-entities
+
+  train-events:
+    - train-spancat-events
+    - evaluate-spancat-events
 
 commands:
   - name: "prepare-entities"
@@ -101,7 +103,7 @@ commands:
     script:
       - python -m spacy download en_core_web_lg
 
-  - name: "train-entities"
+  - name: "train-spancat-entities"
     help: "Train the spancat pipeline on the LitBank entities annotation."
     script:
       - >-
@@ -124,7 +126,7 @@ commands:
     outputs:
       - training/${vars.config}_entities
   
-  - name: "train-events"
+  - name: "train-spancat-events"
     help: "Train spancat pipeline on the LitBank events annotation."
     script:
       - >-
@@ -147,7 +149,7 @@ commands:
     outputs:
       - training/${vars.config}_events
   
-  - name: "evaluate-entities"
+  - name: "evaluate-spancat-entities"
     help: "Evaluate the spancat pipeline trained on entities."
     script:
       - >-
@@ -163,7 +165,7 @@ commands:
       - corpus/entity_spans-test.spacy
       - metrics/${vars.config}_entities.json
 
-  - name: "evaluate-events"
+  - name: "evaluate-spancat-events"
     help: "Evaluate the spancat pipeline trained on events."
     script:
       - >-
