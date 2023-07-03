@@ -1,6 +1,7 @@
 | Notebook                                                                                                        | Description                      |
 | --------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | [`01_intro_to_spacy`][01_intro_to_spacy]<br />[![Open in Colab][colab]][01_intro_to_spacy_colab]                | Intro to spaCy                   |
+| [`02_spancat`][02_spancat]<br />[![Open in Colab][colab]][02_spancat_colab]                | Intro to spancat                   |
 | [`03_litbank_data`][03_litbank_data]<br />[![Open in Colab][colab]][03_litbank_data_colab]                      | Inspect litbank spans data       |
 | [`04_litbank_training`][04_litbank_training]<br />[![Open in Colab][colab]][04_litbank_training_colab]          | Train litbank spancat pipeline |
 | [`05_litbank_pipelines`][05_litbank_pipelines]<br />[![Open in Colab][colab]][05_litbank_pipelines_colab]       | Run litbank spancat pipeline     |
@@ -13,6 +14,9 @@
 [01_intro_to_spacy]: 01_intro_to_spacy.ipynb
 [01_intro_to_spacy_colab]:
   https://colab.research.google.com/github/adrianeboyd/workshop-dh2023/blob/main/notebooks/01_intro_to_spacy.ipynb
+[02_spancat]: 02_spancat.ipynb
+[02_spancat_colab]:
+  https://colab.research.google.com/github/adrianeboyd/workshop-dh2023/blob/main/notebooks/02_spancat.ipynb
 [03_litbank_data]: 03_litbank_data.ipynb
 [03_litbank_data_colab]:
   https://colab.research.google.com/github/adrianeboyd/workshop-dh2023/blob/main/notebooks/03_litbank_data.ipynb
