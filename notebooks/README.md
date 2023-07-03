@@ -2,7 +2,7 @@
 | --------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | [`01_intro_to_spacy`][01_intro_to_spacy]<br />[![Open in Colab][colab]][01_intro_to_spacy_colab]                | Intro to spaCy                   |
 | [`03_litbank_data`][03_litbank_data]<br />[![Open in Colab][colab]][03_litbank_data_colab]                      | Inspect litbank spans data       |
-| [`04_litbank_training`][04_litbank_training]<br />[![Open in Colab][colab]][04_litbank_training_colab]          | Train unsilence spancat pipeline |
+| [`04_litbank_training`][04_litbank_training]<br />[![Open in Colab][colab]][04_litbank_training_colab]          | Train litbank spancat pipeline |
 | [`05_litbank_pipelines`][05_litbank_pipelines]<br />[![Open in Colab][colab]][05_litbank_pipelines_colab]       | Run litbank spancat pipeline     |
 | [`06_unsilence_data`][06_unsilence_data]<br />[![Open in Colab][colab]][06_unsilence_data_colab]                | Inspect unsilence spans data     |
 | [`07_unsilence_training`][07_unsilence_training]<br />[![Open in Colab][colab]][07_unsilence_training_colab]    | Train unsilence spancat pipeline |
