@@ -110,7 +110,7 @@ commands:
         python -m spacy train
         configs/${vars.config}.cfg
         --components.spancat.spans_key entities
-        --components.spancat.suggester.sizes '[1,2,3,4,5,6]'
+        --components.spancat.suggester.sizes '[1,2,3,4,5,6,7,8]'
         --training.score_weights.spans_entities_f 1.0
         --training.score_weights.spans_entities_p 0.0
         --training.score_weights.spans_entities_r 0.0
@@ -180,3 +180,24 @@ commands:
     outputs:
       - corpus/event_spans-test.spacy
       - metrics/${vars.config}_events.json
+
+  - name: "train-span-finder-entities"
+    help: "Train the span finder pipeline on the LitBank entities annotation."
+    script:
+      - >-
+        python -m spacy train
+        configs/span_finder.cfg
+        --training.score_weights.spans_entities_f 0.0
+        --training.score_weights.spans_entities_p 0.2
+        --training.score_weights.spans_entities_r 0.8
+        --output training/span_finder_entities
+        --paths.train corpus/entity_spans-train.spacy
+        --paths.dev corpus/entity_spans-dev.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/span_finder.cfg
+      - corpus/entity_spans-train.spacy
+      - corpus/entity_spans-dev.spacy
+    outputs:
+      - training/span_finder_entities
