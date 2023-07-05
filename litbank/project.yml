@@ -1,15 +1,16 @@
-title: "Train spancat pipelines on LitBank entity and event annotations."
+title: "Train spancat pipelines on LitBank entity annotations."
+description: >
+  Train CNN and TRF pipelines on LitBank entity annotation comparing n-gram,
+  subtree, and span finder suggesters.
 
-directories: ["configs", "assets", "corpus", "training", "scripts", "metrics"]
+directories: ["configs", "assets", "corpus", "training", "scripts", "metrics", "packages"]
 
 vars:
   train_ratio: 0.8
   dev_ratio: 0.1
   seed: 83
-  config: "spancat"
-  gpu: -1
-  #config: "spancat_trf"
-  #gpu: 0
+  gpu: -1  # 0 to enable GPU
+  version: "0.0.1"
 
 assets:
   - dest: "assets/entities/"
@@ -18,25 +19,39 @@ assets:
       branch: "master"
       path: "entities/brat/"
   
-  - dest: "assets/events/"
-    git:
-      repo: "https://github.com/dbamman/litbank"
-      branch: "master"
-      path: "events/brat/"
-
 workflows:
   prepare:
     - prepare-entities
-    - prepare-events
-    - download-vectors
+    - download-lg
+    - download-trf
 
-  train-entities:
-    - train-spancat-entities
-    - evaluate-spancat-entities
+  ngram_lg:
+    - train-spancat_ngram_lg
+    - evaluate-spancat_ngram_lg
+    - package-spancat_ngram_lg
 
-  train-events:
-    - train-spancat-events
-    - evaluate-spancat-events
+  train-all:
+    - train-spancat_ngram_lg
+    - evaluate-spancat_ngram_lg
+    - train-spancat_subtree_lg
+    - evaluate-spancat_subtree_lg
+    - train-spancat_span_finder_lg
+    - evaluate-spancat_span_finder_lg
+    - train-spancat_ngram_trf
+    - evaluate-spancat_ngram_trf
+    - train-spancat_subtree_trf
+    - evaluate-spancat_subtree_trf
+    - train-spancat_span_finder_trf
+    - evaluate-spancat_span_finder_trf
+
+  package-all:
+    - package-spancat_ngram_lg
+    - package-spancat_subtree_lg
+    - package-spancat_span_finder_lg
+    - package-spancat_ngram_trf
+    - package-spancat_subtree_trf
+    - package-spancat_span_finder_trf
+  
 
 commands:
   - name: "prepare-entities"
@@ -45,159 +60,312 @@ commands:
       - >-
         python -m scripts.prepare prepare-brat -i assets/entities
         -o corpus/entity_spans.spacy -l en -s entities -f
-      - >-
-        python -m scripts.prepare spans2ents -i corpus/entity_spans.spacy
-        -l en -f -s entities -o corpus/entity_ents.spacy
       - >- 
         python -m scripts.prepare split -i corpus/entity_spans.spacy
         -t ${vars.train_ratio} -d ${vars.dev_ratio}
         -l en -se ${vars.seed} --shuffle
-      - >- 
-        python -m scripts.prepare split -i corpus/entity_ents.spacy
-        -t ${vars.train_ratio} -d ${vars.dev_ratio}
-        -l en -se ${vars.seed} --shuffle
-#      - >-
-#        python -m spacy debug data configs/${vars.config}.cfg
-#        --paths.train corpus/entity_spans-train.spacy
-#        --paths.dev corpus/entity_spans-dev.spacy
-#        --components.spancat.spans_key entities
     deps:
       - assets/entities
-      - configs/${vars.config}.cfg
     outputs:
       - corpus/entity_spans.spacy
-      - corpus/entity_ents.spacy
       - corpus/entity_spans-train.spacy
       - corpus/entity_spans-dev.spacy
       - corpus/entity_spans-test.spacy
-      - corpus/entity_ents-train.spacy
-      - corpus/entity_ents-dev.spacy
-      - corpus/entity_ents-test.spacy
 
-  - name: "prepare-events"
-    help: "Prepare the LitBank events for use in spaCy."
-    script:
-      - >-
-        python -m scripts.prepare prepare-brat -i assets/events
-        -o corpus/event_spans.spacy -l en -s events -f
-      - >- 
-        python -m scripts.prepare split -i corpus/event_spans.spacy
-        -t ${vars.train_ratio} -d ${vars.dev_ratio}
-        -l en -se ${vars.seed} --shuffle
-#      - >-
-#        python -m spacy debug data configs/${vars.config}.cfg
-#        --paths.train corpus/event_spans-train.spacy
-#        --paths.dev corpus/event_spans-dev.spacy
-#        --components.spancat.spans_key events
-    deps:
-      - assets/events
-      - configs/${vars.config}.cfg
-    outputs:
-      - corpus/event_spans.spacy
-      - corpus/event_spans-train.spacy
-      - corpus/event_spans-dev.spacy
-      - corpus/event_spans-test.spacy
-
-  - name: "download-vectors"
-    help: "Download en_core_web_lg for vectors"
+  - name: "download-lg"
+    help: "Download lg pipeline for vectors and subtree suggester"
     script:
       - python -m spacy download en_core_web_lg
 
-  - name: "train-spancat-entities"
-    help: "Train the spancat pipeline on the LitBank entities annotation."
+  - name: "download-trf"
+    help: "Download trf pipeline subtree suggester"
+    script:
+      - python -m spacy download en_core_web_lg
+
+  - name: "train-spancat_ngram_lg"
     script:
       - >-
         python -m spacy train
-        configs/${vars.config}.cfg
-        --components.spancat.spans_key entities
-        --components.spancat.suggester.sizes '[1,2,3,4,5,6,7,8]'
-        --training.score_weights.spans_entities_f 1.0
-        --training.score_weights.spans_entities_p 0.0
-        --training.score_weights.spans_entities_r 0.0
-        --output training/${vars.config}_entities
+        configs/spancat_ngram_lg.cfg
+        --output training/spancat_ngram_lg
         --paths.train corpus/entity_spans-train.spacy
         --paths.dev corpus/entity_spans-dev.spacy
         --system.seed ${vars.seed}
         --gpu-id ${vars.gpu}
     deps:
-      - configs/${vars.config}.cfg
+      - configs/spancat_ngram_lg.cfg
       - corpus/entity_spans-train.spacy
       - corpus/entity_spans-dev.spacy
     outputs:
-      - training/${vars.config}_entities
+      - training/spancat_ngram_lg
   
-  - name: "train-spancat-events"
-    help: "Train spancat pipeline on the LitBank events annotation."
-    script:
-      - >-
-        python -m spacy train
-        configs/${vars.config}.cfg
-        --components.spancat.spans_key events
-        --components.spancat.suggester.sizes '[1]'
-        --training.score_weights.spans_events_f 1.0
-        --training.score_weights.spans_events_p 0.0
-        --training.score_weights.spans_events_r 0.0
-        --output training/${vars.config}_events
-        --paths.train corpus/event_spans-train.spacy
-        --paths.dev corpus/event_spans-dev.spacy
-        --system.seed ${vars.seed}
-        --gpu-id ${vars.gpu}
-    deps:
-      - configs/${vars.config}.cfg
-      - corpus/event_spans-train.spacy
-      - corpus/event_spans-dev.spacy
-    outputs:
-      - training/${vars.config}_events
-  
-  - name: "evaluate-spancat-entities"
-    help: "Evaluate the spancat pipeline trained on entities."
+  - name: "evaluate-spancat_ngram_lg"
     script:
       - >-
         python -m spacy evaluate
-        training/${vars.config}_entities/model-best
+        training/spancat_ngram_lg/model-best
         corpus/entity_spans-test.spacy
-        --output metrics/${vars.config}_entities.json
+        --output metrics/spancat_ngram_lg.json
         --gpu-id ${vars.gpu}
     deps:
-      - training/${vars.config}_entities/model-best
+      - training/spancat_ngram_lg/model-best
       - corpus/entity_spans-test.spacy
     outputs:
       - corpus/entity_spans-test.spacy
-      - metrics/${vars.config}_entities.json
+      - metrics/spancat_ngram_lg.json
 
-  - name: "evaluate-spancat-events"
-    help: "Evaluate the spancat pipeline trained on events."
+  - name: "package-spancat_ngram_lg"
     script:
+      - mkdir -p packages/spancat_ngram_lg
       - >-
-        python -m spacy evaluate
-        training/${vars.config}_events/model-best
-        corpus/event_spans-test.spacy
-        --output metrics/${vars.config}_events.json
-        --gpu-id ${vars.gpu}
+        python -m spacy package
+        training/spancat_ngram_lg/model-best
+        packages/spancat_ngram_lg
+        --version ${vars.version}
+        --name litbank_spancat_ngram_lg
+        --build wheel
     deps:
-      - training/${vars.config}_events/model-best
-      - corpus/event_spans-test.spacy
-    outputs:
-      - corpus/event_spans-test.spacy
-      - metrics/${vars.config}_events.json
+      - training/spancat_ngram_lg/model-best
 
-  - name: "train-span-finder-entities"
-    help: "Train the span finder pipeline on the LitBank entities annotation."
+  - name: "train-spancat_span_finder_lg"
     script:
       - >-
         python -m spacy train
-        configs/span_finder.cfg
-        --training.score_weights.spans_entities_f 0.0
-        --training.score_weights.spans_entities_p 0.2
-        --training.score_weights.spans_entities_r 0.8
-        --output training/span_finder_entities
+        configs/span_finder_lg.cfg
+        --output training/span_finder_lg
+        --paths.train corpus/entity_spans-train.spacy
+        --paths.dev corpus/entity_spans-dev.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+      - >-
+        python -m spacy train
+        configs/spancat_span_finder_lg.cfg
+        --output training/spancat_span_finder_lg
         --paths.train corpus/entity_spans-train.spacy
         --paths.dev corpus/entity_spans-dev.spacy
         --system.seed ${vars.seed}
         --gpu-id ${vars.gpu}
     deps:
-      - configs/span_finder.cfg
+      - configs/span_finder_lg.cfg
+      - configs/spancat_span_finder_lg.cfg
       - corpus/entity_spans-train.spacy
       - corpus/entity_spans-dev.spacy
     outputs:
-      - training/span_finder_entities
+      - training/spancat_span_finder_lg
+  
+  - name: "evaluate-spancat_span_finder_lg"
+    script:
+      - >-
+        python -m spacy evaluate
+        training/spancat_span_finder_lg/model-best
+        corpus/entity_spans-test.spacy
+        --output metrics/spancat_span_finder_lg.json
+        --gpu-id ${vars.gpu}
+    deps:
+      - training/spancat_span_finder_lg/model-best
+      - corpus/entity_spans-test.spacy
+    outputs:
+      - corpus/entity_spans-test.spacy
+      - metrics/spancat_span_finder_lg.json
+
+  - name: "package-spancat_span_finder_lg"
+    script:
+      - mkdir -p packages/spancat_span_finder_lg
+      - >-
+        python -m spacy package
+        training/spancat_span_finder_lg/model-best
+        packages/spancat_span_finder_lg
+        --version ${vars.version}
+        --name litbank_spancat_span_finder_lg
+        --build wheel
+    deps:
+      - training/spancat_span_finder_lg/model-best
+
+  - name: "train-spancat_subtree_lg"
+    script:
+      - >-
+        python -m spacy train
+        configs/spancat_subtree_lg.cfg
+        --output training/spancat_subtree_lg
+        --paths.train corpus/entity_spans-train.spacy
+        --paths.dev corpus/entity_spans-dev.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/spancat_subtree_lg.cfg
+      - corpus/entity_spans-train.spacy
+      - corpus/entity_spans-dev.spacy
+    outputs:
+      - training/spancat_subtree_lg
+  
+  - name: "evaluate-spancat_subtree_lg"
+    script:
+      - >-
+        python -m spacy evaluate
+        training/spancat_subtree_lg/model-best
+        corpus/entity_spans-test.spacy
+        --output metrics/spancat_subtree_lg.json
+        --gpu-id ${vars.gpu}
+    deps:
+      - training/spancat_subtree_lg/model-best
+      - corpus/entity_spans-test.spacy
+    outputs:
+      - corpus/entity_spans-test.spacy
+      - metrics/spancat_subtree_lg.json
+
+  - name: "package-spancat_subtree_lg"
+    script:
+      - mkdir -p packages/spancat_subtree_lg
+      - >-
+        python -m spacy package
+        training/spancat_subtree_lg/model-best
+        packages/spancat_subtree_lg
+        --version ${vars.version}
+        --name litbank_spancat_subtree_lg
+        --build wheel
+    deps:
+      - training/spancat_subtree_lg/model-best
+
+  - name: "train-spancat_ngram_trf"
+    script:
+      - >-
+        python -m spacy train
+        configs/spancat_ngram_trf.cfg
+        --output training/spancat_ngram_trf
+        --paths.train corpus/entity_spans-train.spacy
+        --paths.dev corpus/entity_spans-dev.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/spancat_ngram_trf.cfg
+      - corpus/entity_spans-train.spacy
+      - corpus/entity_spans-dev.spacy
+    outputs:
+      - training/spancat_ngram_trf
+  
+  - name: "evaluate-spancat_ngram_trf"
+    script:
+      - >-
+        python -m spacy evaluate
+        training/spancat_ngram_trf/model-best
+        corpus/entity_spans-test.spacy
+        --output metrics/spancat_ngram_trf.json
+        --gpu-id ${vars.gpu}
+    deps:
+      - training/spancat_ngram_trf/model-best
+      - corpus/entity_spans-test.spacy
+    outputs:
+      - corpus/entity_spans-test.spacy
+      - metrics/spancat_ngram_trf.json
+
+  - name: "package-spancat_ngram_trf"
+    script:
+      - mkdir -p packages/spancat_ngram_trf
+      - >-
+        python -m spacy package
+        training/spancat_ngram_trf/model-best
+        packages/spancat_ngram_trf
+        --version ${vars.version}
+        --name litbank_spancat_ngram_trf
+        --build wheel
+    deps:
+      - training/spancat_ngram_trf/model-best
+
+  - name: "train-spancat_subtree_trf"
+    script:
+      - >-
+        python -m spacy train
+        configs/spancat_subtree_trf.cfg
+        --output training/spancat_subtree_trf
+        --paths.train corpus/entity_spans-train.spacy
+        --paths.dev corpus/entity_spans-dev.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/spancat_subtree_trf.cfg
+      - corpus/entity_spans-train.spacy
+      - corpus/entity_spans-dev.spacy
+    outputs:
+      - training/spancat_subtree_trf
+  
+  - name: "evaluate-spancat_subtree_trf"
+    script:
+      - >-
+        python -m spacy evaluate
+        training/spancat_subtree_trf/model-best
+        corpus/entity_spans-test.spacy
+        --output metrics/spancat_subtree_trf.json
+        --gpu-id ${vars.gpu}
+    deps:
+      - training/spancat_subtree_trf/model-best
+      - corpus/entity_spans-test.spacy
+    outputs:
+      - corpus/entity_spans-test.spacy
+      - metrics/spancat_subtree_trf.json
+
+  - name: "package-spancat_subtree_trf"
+    script:
+      - mkdir -p packages/spancat_subtree_trf
+      - >-
+        python -m spacy package
+        training/spancat_subtree_trf/model-best
+        packages/spancat_subtree_trf
+        --version ${vars.version}
+        --name litbank_spancat_subtree_trf
+        --build wheel
+    deps:
+      - training/spancat_subtree_trf/model-best
+
+  - name: "train-spancat_span_finder_trf"
+    script:
+      - >-
+        python -m spacy train
+        configs/span_finder_trf.cfg
+        --output training/span_finder_trf
+        --paths.train corpus/entity_spans-train.spacy
+        --paths.dev corpus/entity_spans-dev.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+      - >-
+        python -m spacy train
+        configs/spancat_span_finder_trf.cfg
+        --output training/spancat_span_finder_trf
+        --paths.train corpus/entity_spans-train.spacy
+        --paths.dev corpus/entity_spans-dev.spacy
+        --system.seed ${vars.seed}
+        --gpu-id ${vars.gpu}
+    deps:
+      - configs/span_finder_trf.cfg
+      - configs/spancat_span_finder_trf.cfg
+      - corpus/entity_spans-train.spacy
+      - corpus/entity_spans-dev.spacy
+    outputs:
+      - training/spancat_span_finder_trf
+  
+  - name: "evaluate-spancat_span_finder_trf"
+    script:
+      - >-
+        python -m spacy evaluate
+        training/spancat_span_finder_trf/model-best
+        corpus/entity_spans-test.spacy
+        --output metrics/spancat_span_finder_trf.json
+        --gpu-id ${vars.gpu}
+    deps:
+      - training/spancat_span_finder_trf/model-best
+      - corpus/entity_spans-test.spacy
+    outputs:
+      - corpus/entity_spans-test.spacy
+      - metrics/spancat_span_finder_trf.json
+
+  - name: "package-spancat_span_finder_trf"
+    script:
+      - mkdir -p packages/spancat_span_finder_trf
+      - >-
+        python -m spacy package
+        training/spancat_span_finder_trf/model-best
+        packages/spancat_span_finder_trf
+        --version ${vars.version}
+        --name litbank_spancat_span_finder_trf
+        --build wheel
+    deps:
+      - training/spancat_span_finder_trf/model-best

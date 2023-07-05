@@ -1,23 +1,8 @@
 <!-- SPACY PROJECT: AUTO-GENERATED DOCS START (do not remove) -->
 
-# 🪐 spaCy Project: Train NER and SpanCat pipelines on LitBank entity and event annotations.
+# 🪐 spaCy Project: Train spancat pipelines on LitBank entity annotations.
 
-This project was used in the DH2023 Workshop in Graz to demonstrate how to
-use spaCy to quickly put together useful pipelines.
-
-The [LitBank dataset](https://github.com/dbamman/litbank/) is a collection of a 100 works of fiction
-publicly available from Project Gutenberg majority of which were published between 1852 and 1911.
-Each document is approximately the first 2000 words of the novels leading to a total of
-210532 tokens in the entire data set. It has multiple layers of annotation, but
-here we only focus on the Named Entity and Event annotations. 
-To learn about the entity annotations please checkout
-[this paper](https://people.ischool.berkeley.edu/~dbamman/pubs/pdf/naacl2019_literary_entities.pdf)
-and [this one](https://aclanthology.org/P19-1353.pdf) for the event annotations.
-
-Most config files in [`litbank_pipeline/configs`](litbank_pipeline/configs) project
-were generated with an appropriate
-[`init config`](https://spacy.io/api/cli#init-config) command.
-
+Train CNN and TRF pipelines on LitBank entity annotation comparing n-gram, subtree, and span finder suggesters.
 
 
 ## 📋 project.yml
@@ -35,10 +20,26 @@ Commands are only re-run if their inputs have changed.
 | Command | Description |
 | --- | --- |
 | `prepare-entities` | Prepare the LitBank entities for use in spaCy. |
-| `prepare-events` | Prepare the LitBank events for use in spaCy. |
-| `train` | Train the default NER pipeline. |
-| `find-threshold` | Find classifier threshold for spancat. |
-| `evaluate` | Evaluate the default NER pipeline on the development set. |
+| `download-lg` | Download lg pipeline for vectors and subtree suggester |
+| `download-trf` | Download trf pipeline subtree suggester |
+| `train-spancat_ngram_lg` |  |
+| `evaluate-spancat_ngram_lg` |  |
+| `package-spancat_ngram_lg` |  |
+| `train-spancat_span_finder_lg` |  |
+| `evaluate-spancat_span_finder_lg` |  |
+| `package-spancat_span_finder_lg` |  |
+| `train-spancat_subtree_lg` |  |
+| `evaluate-spancat_subtree_lg` |  |
+| `package-spancat_subtree_lg` |  |
+| `train-spancat_ngram_trf` |  |
+| `evaluate-spancat_ngram_trf` |  |
+| `package-spancat_ngram_trf` |  |
+| `train-spancat_subtree_trf` |  |
+| `evaluate-spancat_subtree_trf` |  |
+| `package-spancat_subtree_trf` |  |
+| `train-spancat_span_finder_trf` |  |
+| `evaluate-spancat_span_finder_trf` |  |
+| `package-spancat_span_finder_trf` |  |
 
 ### ⏭ Workflows
 
@@ -49,8 +50,10 @@ inputs have changed.
 
 | Workflow | Steps |
 | --- | --- |
-| `prepare` | `prepare-entities` &rarr; `prepare-events` |
-| `train-pipeline` | `train` &rarr; `evaluate` |
+| `prepare` | `prepare-entities` &rarr; `download-lg` &rarr; `download-trf` |
+| `ngram_lg` | `train-spancat_ngram_lg` &rarr; `evaluate-spancat_ngram_lg` &rarr; `package-spancat_ngram_lg` |
+| `train-all` | `train-spancat_ngram_lg` &rarr; `evaluate-spancat_ngram_lg` &rarr; `train-spancat_subtree_lg` &rarr; `evaluate-spancat_subtree_lg` &rarr; `train-spancat_span_finder_lg` &rarr; `evaluate-spancat_span_finder_lg` &rarr; `train-spancat_ngram_trf` &rarr; `evaluate-spancat_ngram_trf` &rarr; `train-spancat_subtree_trf` &rarr; `evaluate-spancat_subtree_trf` &rarr; `train-spancat_span_finder_trf` &rarr; `evaluate-spancat_span_finder_trf` |
+| `package-all` | `package-spancat_ngram_lg` &rarr; `package-spancat_subtree_lg` &rarr; `package-spancat_span_finder_lg` &rarr; `package-spancat_ngram_trf` &rarr; `package-spancat_subtree_trf` &rarr; `package-spancat_span_finder_trf` |
 
 ### 🗂 Assets
 
@@ -61,6 +64,5 @@ in the project directory.
 | File | Source | Description |
 | --- | --- | --- |
 | `assets/entities/` | Git |  |
-| `assets/events/` | Git |  |
 
 <!-- SPACY PROJECT: AUTO-GENERATED DOCS END (do not remove) -->
