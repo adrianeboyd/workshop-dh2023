@@ -1,6 +1,6 @@
 title: "Train NER/spancat on UnSilence VOC"
 
-spacy_version: ">=3.6.0.dev1,<4.0.0"
+spacy_version: ">=3.6.0,<4.0.0"
 
 directories: ["configs", "assets", "corpus", "training", "scripts", "metrics"]
 
@@ -29,13 +29,15 @@ workflows:
 
   ner:
     - "train-ner"
-    - "train-ner-trf"
     - "evaluate-ner"
+    - "train-ner-trf"
+    - "evaluate-ner-trf"
 
-  ngram-spancat:
+  spancat:
     - "train-spancat"
-    - "train-spancat-trf"
     - "evaluate-spancat"
+    - "train-spancat-trf"
+    - "evaluate-spancat-trf"
 
 commands:
   - name: "download-vectors"
@@ -175,6 +177,7 @@ commands:
       - training/ner_trf_organization
 
   - name: "evaluate-ner"
+    help: "Evaluate the NER CNN pipelines"
     script:
        - >-
          python -m spacy evaluate
@@ -194,6 +197,21 @@ commands:
          corpus/test-nl.ents.Organization.spacy
          -o metrics/ner_organization.json
          --gpu-id ${vars.gpu}
+    deps:
+      - corpus/test-nl.ents.Person.spacy
+      - corpus/test-nl.ents.Place.spacy
+      - corpus/test-nl.ents.Organization.spacy
+      - training/ner_person/model-best
+      - training/ner_place/model-best
+      - training/ner_organization/model-best
+    outputs:
+      - metrics/ner_person.json
+      - metrics/ner_place.json
+      - metrics/ner_organization.json
+
+  - name: "evaluate-ner-trf"
+    help: "Evaluate the NER TRF pipelines"
+    script:
        - >-
          python -m spacy evaluate
          training/ner_trf_person/model-best
@@ -216,18 +234,12 @@ commands:
       - corpus/test-nl.ents.Person.spacy
       - corpus/test-nl.ents.Place.spacy
       - corpus/test-nl.ents.Organization.spacy
-      - training/ner_person/model-best
       - training/ner_trf_person/model-best
-      - training/ner_place/model-best
       - training/ner_trf_place/model-best
-      - training/ner_organization/model-best
       - training/ner_trf_organization/model-best
     outputs:
-      - metrics/ner_person.json
       - metrics/ner_trf_person.json
-      - metrics/ner_place.json
       - metrics/ner_trf_place.json
-      - metrics/ner_organization.json
       - metrics/ner_trf_organization.json
 
   - name: "train-spancat"
@@ -266,6 +278,7 @@ commands:
       - training/spancat_trf
 
   - name: "evaluate-spancat"
+    help: "Evaluate the spancat CNN pipeline"
     script:
        - >-
          python -m spacy evaluate
@@ -273,6 +286,15 @@ commands:
          corpus/test-nl.spans.spacy
          -o metrics/spancat.json
          --gpu-id ${vars.gpu}
+    deps:
+      - corpus/test-nl.spans.spacy
+      - training/spancat/model-best
+    outputs:
+      - metrics/spancat.json
+
+  - name: "evaluate-spancat-trf"
+    help: "Evaluate the spancat TRF pipeline"
+    script:
        - >-
          python -m spacy evaluate
          training/spancat_trf/model-best
@@ -281,8 +303,6 @@ commands:
          --gpu-id ${vars.gpu}
     deps:
       - corpus/test-nl.spans.spacy
-      - training/spancat/model-best
       - training/spancat_trf/model-best
     outputs:
-      - metrics/spancat.json
       - metrics/spancat_trf.json
