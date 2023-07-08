@@ -1,0 +1,195 @@
+@charset "UTF-8";
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #f8f8f8;
+  font-family: "Nunito", sans-serif;
+}
+
+aside.context {
+  text-align: center;
+  color: #333;
+  line-height: 1.7;
+}
+aside.context a {
+  text-decoration: none;
+  color: #333;
+  padding: 3px 0;
+  border-bottom: 1px dashed;
+}
+aside.context a:hover {
+  border-bottom: 1px solid;
+}
+aside.context .explanation {
+  max-width: 700px;
+  margin: 4em auto 0;
+}
+
+footer {
+  text-align: center;
+  margin: 3em auto;
+  width: 100%;
+}
+footer a {
+  text-decoration: none;
+  display: inline-block;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px dashed #333;
+  color: #333;
+  margin: 5px;
+}
+footer a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+footer a .icons {
+  margin-top: 12px;
+  display: inline-block;
+  font-size: 20px;
+}
+
+.main-content {
+  max-width: 800px;
+  width: 100%;
+  margin: 4em auto 0;
+  overflow: hidden;
+}
+
+.title {
+
+  background: url("https://spacy.io/_next/static/media/pattern_purple.59aa6816.png");
+  color: #fff;
+  padding: 30px 10px;
+  grid-column: span 5;
+  text-align: center;
+  font: 72px/0.9 "Amatic SC", cursive;
+}
+.title span {
+  display: none;
+}
+.title span:nth-child(1) {
+  display: block;
+}
+@media screen and (max-width: 600px) {
+  .title span:nth-child(1) {
+    display: none;
+  }
+  .title span:nth-child(2) {
+    display: block;
+  }
+}
+
+.bingo-card {
+  background: #899fc1;
+  padding: 10px;
+  display: grid;
+  grid-gap: 3px;
+  grid-template-rows: repeat(5, 110px);
+  grid-template-columns: repeat(5, 1fr);
+  text-transform: uppercase;
+}
+.bingo-card__item {
+  background: #edeff0fd;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.35;
+  user-select: none;
+}
+.bingo-card__item:after {
+  content: "-";
+  position: absolute;
+  top: -28%;
+  left: -30%;
+  color: #9000ff8e;
+  width: 100%;
+  opacity: 0;
+  transition: 0.1s ease;
+  height: 0;
+  pointer-events: none;
+  font: 280px/0.5 "Caveat Brush", cursive;
+  text-align: center;
+  transform: rotate(-45deg);
+}
+.bingo-card__item.active:after {
+  height: 100%;
+  opacity: 0.7;
+}
+
+.bingo-card__item {
+  padding: 15px;
+}
+.bingo-card__item.active .bingo-card__checkbox:before {
+  content: "✔";
+  position: absolute;
+  color: black;
+  left: 0;
+  top: -19px;
+  color: #fdb90b;
+  font: 30px "Caveat Brush", cursive;
+}
+.bingo-card__checkbox {
+  display: none;
+}
+
+.clear-button {
+  margin: 2em 0 0;
+  font: 700 16px "Nunito", sans-serif;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-block;
+  border: 2px dotted;
+  color: #5f95eb70;
+  padding: 8px 10px;
+}
+.clear-button:hover {
+  color: #5f95eb70;
+}
+
+@media screen and (max-width: 600px) {
+  .main-content {
+    max-width: none;
+    margin: 0;
+  }
+
+  .title {
+    font: 50px/0.9 "Amatic SC", cursive;
+    padding: 20px;
+  }
+
+  .bingo-card {
+    grid-template-rows: repeat(24, auto);
+    grid-template-columns: auto;
+    margin: 1em;
+  }
+
+  .bingo-card__item {
+    justify-content: flex-start;
+    padding: 15px 15px 15px 40px;
+    text-align: left;
+  }
+  .bingo-card__item:after {
+    content: "";
+    opacity: 0;
+  }
+  .bingo-card__item:nth-child(13) {
+    display: none;
+  }
+
+  .bingo-card__checkbox {
+    display: inline;
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 10px;
+    border: 2px dashed #f7d75c;
+  }
+}
