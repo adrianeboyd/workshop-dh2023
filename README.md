@@ -4,7 +4,9 @@
 
 Tuesday, 11 July 2023, 1:30pm - 5:00pm 
 
-[RESOWI](https://ub.uni-graz.at/de/bibliotheken/fakultaetsbibliothek-resowi/) | Section F | Third Floor | SR 15.37 
+[RESOWI](https://ub.uni-graz.at/de/bibliotheken/fakultaetsbibliothek-resowi/) | Section F | Third Floor | SR 15.37  
+
+[bingo link](https://spancat-bingo.netlify.app/) 
 
 ## Schedule 
 
