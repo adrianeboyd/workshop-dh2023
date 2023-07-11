@@ -35,3 +35,30 @@
 [08_unsilence_pipelines]: 08_unsilence_pipelines.ipynb
 [08_unsilence_pipelines_colab]:
   https://colab.research.google.com/github/adrianeboyd/workshop-dh2023/blob/main/notebooks/08_unsilence_pipelines.ipynb
+
+
+
+
+## How to get started locally?
+If you don't have any experience with setting up git repositories and python/jupyter locally, your best option might be using the colab link. The following script is meant for users who know the basics and just need a reminder of all steps that are (potentially) necessary and which they can adapt for their needs.
+```bash
+PATH_TO_PYTHON=/opt/homebrew/bin/python3.10
+PATH_TO_VIRTUAL_ENVS=/Users/USER/envs/
+KERNEL_NAME=wdh23
+
+# 1. clone repo and change to notebook directory
+git clone https://github.com/adrianeboyd/workshop-dh2023.git
+cd workshop-dh2023
+cd notebooks
+
+# 2. create virtual environment and activate it
+$PATH_TO_PYTHON -m venv ${PATH_TO_VIRTUAL_ENVS}workshop-dh2023
+source  ${PATH_TO_VIRTUAL_ENVS}workshop-dh2023/bin/activate
+
+# 3. Install jupyter and add current environment as ipy kernel
+pip install jupyter
+python -m ipykernel install --user --name $KERNEL_NAME
+
+# 4. start notebook. When opening a notebook, select Kernel > Change Kernel > $KERNEL_NAME
+jupyter notebook
+```
