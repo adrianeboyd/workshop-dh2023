@@ -78,9 +78,9 @@ commands:
       - python -m spacy download en_core_web_lg
 
   - name: "download-trf"
-    help: "Download trf pipeline subtree suggester"
+    help: "Download trf pipeline for subtree suggester"
     script:
-      - python -m spacy download en_core_web_lg
+      - python -m spacy download en_core_web_trf
 
   - name: "train-spancat_ngram_lg"
     script:
