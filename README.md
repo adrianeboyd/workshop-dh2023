@@ -1,6 +1,6 @@
 # Digital Humanities Applications of spaCy’s Span Categorizer
 
-![spancat logo](https://explosion.ai/static/b9ec854dac9862a2b9cc09927f69d41b/d0aba/spancat.jpg) 
+![spancat logo](images/spancat.jpg)
 
 Tuesday, 11 July 2023, 1:30pm - 5:00pm 
 
