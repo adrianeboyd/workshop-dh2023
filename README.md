@@ -8,7 +8,7 @@ Tuesday, 11 July 2023, 1:30pm - 5:00pm
 
 [bingo link](https://spancat-bingo.netlify.app/) 
 
-[slides](https://docs.google.com/presentation/d/1MPAMY61k1vRS3_ccn4WJwJW3UV5TGiCRcObNiKXDA7E/edit?usp=sharing)
+[slides](slides/dh2023-workshop.pdf)
 
 ## Schedule 
 
